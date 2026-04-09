@@ -5,12 +5,14 @@
 ## 🛠️ Commandes essentielles
 
 ### Configuration initiale
+
 ```bash
 git config --global user.name "Ton Nom"
 git config --global user.email "ton@email.com"
 ```
 
 ### Branches
+
 ```bash
 git branch -a                        # Voir toutes les branches
 git checkout develop                 # Changer de branche
@@ -20,6 +22,7 @@ git push origin --delete feature/client/nom  # Supprimer une branche sur le remo
 ```
 
 ### Commiter
+
 ```bash
 git status                           # Voir l'état des fichiers
 git add .                            # Ajouter tous les fichiers
@@ -29,6 +32,7 @@ git commit --amend                   # Modifier le dernier commit
 ```
 
 ### Synchronisation
+
 ```bash
 git pull origin develop              # Récupérer les dernières modifs de develop
 git push origin feature/client/nom  # Pusher sa branche
@@ -36,6 +40,7 @@ git push origin feature/client/nom --force-with-lease  # Pusher après un rebase
 ```
 
 ### Rebase
+
 ```bash
 git rebase develop                   # Rebase sa branche sur develop
 git rebase -i HEAD~3                 # Rebase interactif sur les 3 derniers commits (squash)
@@ -44,6 +49,7 @@ git rebase --abort                   # Annuler le rebase en cours
 ```
 
 ### Historique
+
 ```bash
 git log --oneline                    # Historique condensé
 git log --oneline --graph --all      # Historique visuel de toutes les branches
@@ -51,6 +57,7 @@ git diff                             # Voir les modifications non commitées
 ```
 
 ### Urgence / Sauvegarde rapide
+
 ```bash
 git stash                            # Mettre de côté ses modifications
 git stash pop                        # Récupérer ses modifications mises de côté
@@ -62,6 +69,7 @@ git stash list                       # Voir tous les stash
 ## 🔄 Workflow complet
 
 ### ☀️ Début de journée
+
 ```bash
 git checkout develop
 git pull origin develop
@@ -70,6 +78,7 @@ git rebase develop
 ```
 
 ### 💻 Pendant le développement
+
 ```bash
 git status
 git add .
@@ -77,7 +86,29 @@ git commit -m "feat: description de ce que j'ai fait"
 # Recommencer autant de fois que nécessaire
 ```
 
+### 📤 Debut d'une feature — Préparer la branche
+
+```bash
+# 1. Mettre à jour develop
+git checkout develop
+git pull origin develop
+
+# 2. Rebase sa feature sur develop
+git checkout -b feature/nom-de-la-feature
+git rebase develop
+
+# 3. Faire du code, commiter régulièrement
+git add .
+git commit -m "feat: description de ce que j'ai fait"
+
+# 4. Pusher
+git push origin feature/nom-de-la-feature
+
+# 5. Ouvrir une Pull Request sur GitHub vers develop
+```
+
 ### 📤 Fin de feature — Préparer la Pull Request
+
 ```bash
 # 1. Mettre à jour develop
 git checkout develop
@@ -97,6 +128,7 @@ git push origin feature/client/ma-feature --force-with-lease
 ```
 
 ### ✅ Après le merge de la PR
+
 ```bash
 git checkout develop
 git pull origin develop
@@ -104,6 +136,7 @@ git branch -d feature/client/ma-feature
 ```
 
 ### 🚨 Hotfix — Bug critique en production
+
 ```bash
 # 1. Partir de main
 git checkout main
@@ -131,6 +164,7 @@ git push origin --delete hotfix/description-du-bug
 ## ❌ Erreurs courantes
 
 ### 1. Oublier de rebase avant la PR
+
 ```
 Symptôme :
   Conflits massifs sur la PR
@@ -148,6 +182,7 @@ Solution :
 ```
 
 ### 2. Travailler directement sur develop
+
 ```
 Symptôme :
   Tu réalises que tes commits sont sur develop
@@ -163,6 +198,7 @@ Solution :
 ```
 
 ### 3. Push refusé après un rebase
+
 ```
 Symptôme :
   ! [rejected] feature/client/ma-feature (non-fast-forward)
@@ -177,6 +213,7 @@ Solution :
 ```
 
 ### 4. Conflit pendant un rebase
+
 ```
 Symptôme :
   CONFLICT (content): Merge conflict in fichier.js
@@ -203,6 +240,7 @@ Solution :
 ```
 
 ### 5. Mauvais message de commit
+
 ```
 Symptôme :
   Tu viens de commiter avec un mauvais message
@@ -216,6 +254,7 @@ Solution (si déjà pushé) :
 ```
 
 ### 6. Fichier sensible commité par erreur (.env, mot de passe)
+
 ```
 Symptôme :
   Tu as commité un fichier .env ou des credentials
@@ -235,6 +274,7 @@ Solution :
 ```
 
 ### 7. Perdre ses modifications non commitées
+
 ```
 Symptôme :
   Tu as changé de branche sans commiter
@@ -247,6 +287,50 @@ Solution :
   # ... faire ce que tu dois faire ...
   git checkout feature/client/ma-feature
   git stash pop        # récupérer ses modifs
+```
+
+### 8. Quand utiliser --force-with-lease
+
+```
+Tu as déjà pushé la branche
+        +
+Tu as réécrit l'historique
+        =
+--force-with-lease obligatoire
+```
+
+### 📋 Les cas concrets
+
+```bash
+# 1. Après un rebase
+git rebase develop
+git push origin feature/login --force-with-lease
+
+# 2. Après un squash (rebase interactif)
+git rebase -i HEAD~3
+git push origin feature/login --force-with-lease
+
+# 3. Après un amend
+git commit --amend
+git push origin feature/login --force-with-lease
+```
+
+### 🧠 Règle simple
+
+```
+Premier push de la branche      → push normal
+Push après réécriture           → --force-with-lease
+```
+
+---
+
+### 🚫 Jamais sur
+
+```
+❌ main
+❌ develop
+❌ branche partagée avec d'autres
+✅ uniquement sur TES branches personnelles
 ```
 
 ---
