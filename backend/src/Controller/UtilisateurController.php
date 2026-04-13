@@ -54,6 +54,13 @@ final class UtilisateurController extends AbstractController
             ]);
         }
 
+        if ($utilisateur->getId() === $utilisateurconnecte->getId()) {
+            return $this->json($utilisateur, 200, [], [
+                'groups' => ['user:read'],
+            ]);
+        }
+
+
         $role = $utilisateurconnecte->getRole();
         if ($role === Role::TUTEUR->name) {
             // On verifie que le tuteur a le droit de voir les informations de cet utilisateur (il doit être le tuteur d'un alternant qui est lié à cet utilisateur)

@@ -1,0 +1,51 @@
+.tuteur-prof {
+  & h2 {
+    text-align: center;
+    margin-top: 30px;
+
+    & .week {
+      width: 100%;
+      display: block ruby;
+      color: var(--color-text);
+    }
+  }
+  &-caption {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    width: 50%;
+    margin: 30px auto 0px auto;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: start;
+  }
+
+  &-liste {
+    border: 2px solid var(--color-primary);
+    background-color: var(--color-bg);
+    border-radius: 10px;
+
+    width: 50%;
+    margin: 0px auto 30px auto;
+    padding: 20px;
+  }
+}
+
+.alternant-item.ligne {
+  font-size: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  margin-top: 10px;
+  text-align: start;
+
+  & .alternant-link {
+    color: var(--color-secondary);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+    &-name {
+      white-space: nowrap;
+    }
+  }
+}

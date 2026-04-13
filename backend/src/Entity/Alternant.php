@@ -34,6 +34,7 @@ class Alternant
      * @var Collection<int, Tutorat>
      */
     #[ORM\OneToMany(targetEntity: Tutorat::class, mappedBy: 'alternant')]
+    #[Groups(['user:read'])]
     private Collection $tutorats;
 
     /**

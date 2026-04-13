@@ -1,0 +1,21 @@
+.input {
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
+
+  & label {
+    font-size: 16px;
+    padding-left: 10px;
+    margin-bottom: 5px;
+  }
+
+  & input {
+    width: 25vw;
+    min-width: 250px;
+    height: 25px;
+    padding: 0.5rem;
+    border: 0px solid var(--color-secondary);
+    border-radius: 10px;
+    box-shadow: 5px 2px 12px var(--color-secondary);
+  }
+}

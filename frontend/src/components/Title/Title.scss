@@ -1,0 +1,23 @@
+.title{
+
+  width: fit-content;
+  text-align: center;
+  margin: 0 auto;
+  padding: 10px 20px;
+  border-radius: 25px;
+  border: 5px solid transparent;
+
+  background: linear-gradient(
+        to right,
+        color-mix(in srgb, var(--color-secondary) 0%, white) 35%,
+        color-mix(in srgb, var(--color-secondary) 20%, white) 100%
+      )
+      padding-box,
+    radial-gradient(var(--color-bg) 30%, var(--color-primary) 95%) border-box;
+
+  & h1 {
+    margin: 0;
+  }
+
+
+}

@@ -26,6 +26,7 @@ final class AlternantController extends AbstractController
         private ValidatorInterface $validator,
     ) {}
 
+
     #[Route(name: 'app_alternant_index', methods: ['GET'])]
     public function index(
         AlternantRepository $alternantRepository,

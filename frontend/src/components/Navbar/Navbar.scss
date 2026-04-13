@@ -1,0 +1,35 @@
+nav {
+  position: absolute;
+  top: 30px;
+  right: 0;
+
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  gap: 50px;
+  margin-right: 50px;
+
+  & button {
+    background: linear-gradient(
+      to bottom,
+      var(--color-accent) 0%,
+      color-mix(in srgb, var(--color-accent) 60%, white) 50%,
+      var(--color-accent) 100%
+    );
+    color: var(--color-text);
+    border: var(--color-secondary) solid 1px;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+
+    &:hover {
+      background: linear-gradient(
+        to bottom,
+        var(--color-accent) 0%,
+        color-mix(in srgb, var(--color-accent) 80%, white) 50%,
+        var(--color-accent) 100%
+      );
+    }
+
+  }
+}

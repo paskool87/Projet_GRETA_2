@@ -1,0 +1,48 @@
+.past-weeks {
+
+  & h3 {
+    margin-top: 50px;
+    text-align: center;
+    color: var(--color-secondary);
+    font-size: 24px;
+  }
+
+  &-list {
+    width: 50%;
+    margin: 20px auto;
+    padding-left: 20px;
+    box-shadow: inset 0 0 5px var(--color-secondary);
+    border-radius: 5px;
+    position: relative;
+
+    & a {
+      text-decoration: none;
+      color: var(--color-text);
+    }
+
+    &-item {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+
+      & p {
+        color: var(--color-text);
+        margin: 6px 0;
+      }
+      &:hover {
+        background-color: var(--color-accent);
+      }
+    
+    }
+
+    
+  }
+}
+.filters {
+  position: absolute;
+  top: -30px;
+  right: 0px;
+
+  &-year {
+    width: 80px;
+  }
+}
