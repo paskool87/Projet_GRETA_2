@@ -8,36 +8,52 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\MaxDepth;
+use Symfony\Component\Validator\Constraints as Assert;
 
-use function PHPSTORM_META\type;
+
 
 #[ORM\Entity(repositoryClass: UtilisateurRepository::class)]
-class Utilisateur
+#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
+
+class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['admin', 'user'])]
     private ?int $id = null;
 
+    #[Groups(['admin'])]
     #[ORM\Column(length: 45)]
     private ?string $nom = null;
 
+    #[Groups(['admin'])]
     #[ORM\Column(length: 45)]
     private ?string $prenom = null;
 
+    #[Groups(['admin'])]
     #[ORM\Column(length: 64)]
     private ?string $email = null;
 
     #[ORM\Column(length: 80)]
     private ?string $mot_de_passe = null;
 
-    #[ORM\Column(length:240)]
+    #[Groups(['admin'])]
+    #[ORM\Column(length: 240)]
     private ?string $role;
 
+    #[ORM\Column(nullable: true)]
+    private ?array $permission;
+
+    #[Groups(['admin'])]
     #[ORM\Column]
     private ?bool $actif = null;
 
-    
+
 
     /**
      * @var Collection<int, Tutorat>
@@ -52,6 +68,7 @@ class Utilisateur
     private Collection $suiviPedagogiques;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[Groups(['admin'])]
     private ?\DateTime $date_creation = null;
 
     public function __construct()
@@ -59,6 +76,43 @@ class Utilisateur
         $this->tutorats = new ArrayCollection();
         $this->suiviPedagogiques = new ArrayCollection();
     }
+
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->email;
+    }
+
+    public function getRoles(): array
+    {
+        return match ($this->role) {
+            Role::ADMINISTRATEUR->label()       => ['ROLE_ADMIN', 'ROLE_USER'],
+            Role::PROFESSEUR_REFERENT->label()  => ['ROLE_PROFESSEUR', 'ROLE_USER'],
+            Role::ALTERNAT->label()             => ['ROLE_ALTERNANT', 'ROLE_USER'],
+            Role::TUTEUR->label()               => ['ROLE_TUTEUR', 'ROLE_USER'],
+            default                             => ['ROLE_USER'],
+        };
+    }
+
+
+    public function setRoles(array $roles): static
+    {
+        $this->permission = $roles;
+
+        return $this;
+    }
+
+    public function getPassword(): ?string
+    {
+        return $this->mot_de_passe;
+    }
+
+    public function setPassword(string $password): static
+    {
+        $this->mot_de_passe = $password;
+
+        return $this;
+    }
+
 
     public function getId(): ?int
     {

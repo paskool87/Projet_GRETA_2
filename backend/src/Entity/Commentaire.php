@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\CommentaireRepository;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CommentaireRepository::class)]
@@ -13,9 +14,11 @@ class Commentaire
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['admin'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 200)]
+    #[Groups(['admin'])]
     private ?string $commentaire = null;
 
 
@@ -28,6 +31,7 @@ class Commentaire
     private ?Fiche $fiche_id = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Groups(['admin'])]
     private ?\DateTime $date_creation = null;
 
     public function getId(): ?int

@@ -17,9 +17,14 @@ use DateTime;
 use Faker;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UtilisateurFixtures extends Fixture
 {
+    public function __construct(
+        private UserPasswordHasherInterface $passwordHasher
+    ) {}
+
     public function load(ObjectManager $manager): void
     {
         $faker = Faker\Factory::create("fr_FR");
@@ -28,7 +33,7 @@ class UtilisateurFixtures extends Fixture
         // $manager->persist($utilisateur);
         $utilisateurs = [];
         $alternants = [];
-        $proffeseurs = [];
+        $professeurs = [];
         $tuteurs = [];
         $formations = [];
 
@@ -48,7 +53,12 @@ class UtilisateurFixtures extends Fixture
                 ->setEmail($faker->email())
                 ->setNom($faker->firstName())
                 ->setPrenom($faker->lastName())
-                ->setMotDePasse($faker->password())
+                ->setMotDePasse(
+                    $this->passwordHasher->hashPassword(
+                        $professeur,
+                        $i . "motdepasse"
+                    )
+                )
                 ->setRole(Role::PROFESSEUR_REFERENT->label());
             $manager->persist($professeur);
             $professeurs[] = $professeur;
@@ -61,7 +71,12 @@ class UtilisateurFixtures extends Fixture
                 ->setEmail($faker->email())
                 ->setNom($faker->firstName())
                 ->setPrenom($faker->lastName())
-                ->setMotDePasse($faker->password())
+                ->setMotDePasse(
+                    $this->passwordHasher->hashPassword(
+                        $u_alternant,
+                        $i . "motdepasse"
+                    )
+                )
                 ->setRole(Role::ALTERNAT->label());
             $manager->persist($u_alternant);
 
@@ -95,7 +110,12 @@ class UtilisateurFixtures extends Fixture
                 ->setEmail($faker->email())
                 ->setNom($faker->firstName())
                 ->setPrenom($faker->lastName())
-                ->setMotDePasse($faker->password())
+                ->setMotDePasse(
+                    $this->passwordHasher->hashPassword(
+                        $tuteur,
+                        $i . "motdepasse"
+                    )
+                )
                 ->setRole(Role::TUTEUR->label());
             $manager->persist($tuteur);
 
@@ -118,7 +138,10 @@ class UtilisateurFixtures extends Fixture
             ->setEmail("admin@gmail.com")
             ->setNom("admin")
             ->setPrenom("admin")
-            ->setMotDePasse("admin")
+            ->setMotDePasse(
+                $this->passwordHasher->hashPassword($admin, $i . "motdepasse"),
+
+            )
             ->setRole(Role::ADMINISTRATEUR->label());
         $manager->persist($admin);
         $admin = new Utilisateur();
@@ -152,9 +175,9 @@ class UtilisateurFixtures extends Fixture
                 if ($faker->boolean(50)) {
                     $commentaire = new Commentaire();
                     $commentaire->setFicheId($fiche)
-                        ->setCommentaire($faker->sentence($faker->numberBetween(1, 20)))
+                        ->setCommentaire($faker->sentence())
                         ->setAuteurId($faker->randomElement($utilisateurs))->setDateCreation($faker->dateTimeBetween($debut, $fin))
-                    ;   //manque date creation
+                    ;
                     $manager->persist($commentaire);
                 }
                 for ($i = 0; $i < $faker->numberBetween(1, 5); $i++) {

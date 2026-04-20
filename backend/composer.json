@@ -7,17 +7,28 @@
         "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
-        "doctrine/doctrine-bundle": "^3.2",
+        "doctrine/doctrine-bundle": "^3.2.2",
         "doctrine/doctrine-migrations-bundle": "^4.0",
-        "doctrine/orm": "^3.6",
-        "symfony/apache-pack": "*",
+        "doctrine/orm": "^3.6.3",
+        "lexik/jwt-authentication-bundle": "^3.2",
+        "phpdocumentor/reflection-docblock": "^6.0",
+        "phpstan/phpdoc-parser": "^2.3",
+        "symfony/apache-pack": ">=1.0.1",
         "symfony/console": "8.0.*",
         "symfony/dotenv": "8.0.*",
-        "symfony/flex": "^2",
+        "symfony/flex": "^2.10",
+        "symfony/form": "8.0.*",
         "symfony/framework-bundle": "8.0.*",
+        "symfony/property-access": "8.0.*",
+        "symfony/property-info": "8.0.*",
         "symfony/runtime": "8.0.*",
+        "symfony/security-bundle": "8.0.*",
+        "symfony/serializer": "8.0.*",
+        "symfony/translation": "8.0.*",
         "symfony/uid": "8.0.*",
-        "symfony/yaml": "8.0.*"
+        "symfony/validator": "8.0.*",
+        "symfony/yaml": "8.0.*",
+        "web-token/jwt-framework": "^4.1.6"
     },
     "config": {
         "allow-plugins": {
@@ -72,8 +83,8 @@
         }
     },
     "require-dev": {
-        "doctrine/doctrine-fixtures-bundle": "^4.3",
-        "fakerphp/faker": "^1.24",
+        "doctrine/doctrine-fixtures-bundle": "^4.3.1",
+        "fakerphp/faker": "^1.24.1",
         "symfony/maker-bundle": "^1.67",
         "symfony/stopwatch": "8.0.*",
         "symfony/web-profiler-bundle": "8.0.*"

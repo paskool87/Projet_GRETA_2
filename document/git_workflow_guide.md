@@ -5,12 +5,14 @@
 ## 🛠️ Commandes essentielles
 
 ### Configuration initiale
+
 ```bash
 git config --global user.name "Ton Nom"
 git config --global user.email "ton@email.com"
 ```
 
 ### Branches
+
 ```bash
 git branch -a                        # Voir toutes les branches
 git checkout develop                 # Changer de branche
@@ -20,6 +22,7 @@ git push origin --delete feature/client/nom  # Supprimer une branche sur le remo
 ```
 
 ### Commiter
+
 ```bash
 git status                           # Voir l'état des fichiers
 git add .                            # Ajouter tous les fichiers
@@ -29,6 +32,7 @@ git commit --amend                   # Modifier le dernier commit
 ```
 
 ### Synchronisation
+
 ```bash
 git pull origin develop              # Récupérer les dernières modifs de develop
 git push origin feature/client/nom  # Pusher sa branche
@@ -36,6 +40,7 @@ git push origin feature/client/nom --force-with-lease  # Pusher après un rebase
 ```
 
 ### Rebase
+
 ```bash
 git rebase develop                   # Rebase sa branche sur develop
 git rebase -i HEAD~3                 # Rebase interactif sur les 3 derniers commits (squash)
@@ -44,6 +49,7 @@ git rebase --abort                   # Annuler le rebase en cours
 ```
 
 ### Historique
+
 ```bash
 git log --oneline                    # Historique condensé
 git log --oneline --graph --all      # Historique visuel de toutes les branches
@@ -51,6 +57,7 @@ git diff                             # Voir les modifications non commitées
 ```
 
 ### Urgence / Sauvegarde rapide
+
 ```bash
 git stash                            # Mettre de côté ses modifications
 git stash pop                        # Récupérer ses modifications mises de côté
@@ -62,6 +69,7 @@ git stash list                       # Voir tous les stash
 ## 🔄 Workflow complet
 
 ### ☀️ Début de journée
+
 ```bash
 git checkout develop
 git pull origin develop
@@ -70,6 +78,7 @@ git rebase develop
 ```
 
 ### 💻 Pendant le développement
+
 ```bash
 git status
 git add .
@@ -78,6 +87,7 @@ git commit -m "feat: description de ce que j'ai fait"
 ```
 
 ### 📤 Fin de feature — Préparer la Pull Request
+
 ```bash
 # 1. Mettre à jour develop
 git checkout develop
@@ -97,6 +107,7 @@ git push origin feature/client/ma-feature --force-with-lease
 ```
 
 ### ✅ Après le merge de la PR
+
 ```bash
 git checkout develop
 git pull origin develop
@@ -104,6 +115,7 @@ git branch -d feature/client/ma-feature
 ```
 
 ### 🚨 Hotfix — Bug critique en production
+
 ```bash
 # 1. Partir de main
 git checkout main
@@ -131,7 +143,8 @@ git push origin --delete hotfix/description-du-bug
 ## ❌ Erreurs courantes
 
 ### 1. Oublier de rebase avant la PR
-```
+
+```bash
 Symptôme :
   Conflits massifs sur la PR
   La PR est loin derrière develop
@@ -148,7 +161,8 @@ Solution :
 ```
 
 ### 2. Travailler directement sur develop
-```
+
+```bash
 Symptôme :
   Tu réalises que tes commits sont sur develop
   et non sur une branche feature
@@ -163,7 +177,8 @@ Solution :
 ```
 
 ### 3. Push refusé après un rebase
-```
+
+```bash
 Symptôme :
   ! [rejected] feature/client/ma-feature (non-fast-forward)
 
@@ -177,7 +192,8 @@ Solution :
 ```
 
 ### 4. Conflit pendant un rebase
-```
+
+```bash
 Symptôme :
   CONFLICT (content): Merge conflict in fichier.js
   error: could not apply a1b2c3... feat: ma feature
@@ -203,6 +219,7 @@ Solution :
 ```
 
 ### 5. Mauvais message de commit
+
 ```
 Symptôme :
   Tu viens de commiter avec un mauvais message
@@ -216,7 +233,8 @@ Solution (si déjà pushé) :
 ```
 
 ### 6. Fichier sensible commité par erreur (.env, mot de passe)
-```
+
+```bash
 Symptôme :
   Tu as commité un fichier .env ou des credentials
 
@@ -235,7 +253,8 @@ Solution :
 ```
 
 ### 7. Perdre ses modifications non commitées
-```
+
+```bash
 Symptôme :
   Tu as changé de branche sans commiter
   tes modifications ont disparu
@@ -253,7 +272,8 @@ Solution :
 
 ## 📝 Convention des messages de commit
 
-```
+```bash
+
 feat:     nouvelle fonctionnalité
 fix:      correction de bug
 chore:    tâche technique (config, dépendances)
@@ -276,7 +296,8 @@ git commit -m "docs: mise à jour README"
 
 ## 🌿 Structure des branches
 
-```
+```bash
+
 main              → production stable, jamais de commit direct
 └── develop       → intégration, base de travail
     ├── feature/client/nom-de-la-feature
@@ -289,7 +310,8 @@ main              → production stable, jamais de commit direct
 
 ## 📅 Résumé visuel du workflow
 
-```
+```bash
+
 develop à jour
       ↓
 créer feature/client/ma-feature

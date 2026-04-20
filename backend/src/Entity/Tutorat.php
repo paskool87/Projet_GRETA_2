@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\TutoratRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: TutoratRepository::class)]
 class Tutorat
@@ -23,11 +24,14 @@ class Tutorat
     private ?Alternant $alternant_id = null;
 
     #[ORM\Column]
+    #[Groups(['admin'])]
     private ?bool $actif = null;
 
+    #[Groups(['admin'])]
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTime $date_debut = null;
 
+    #[Groups(['admin'])]
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTime $date_fin = null;
 

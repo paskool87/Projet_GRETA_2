@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\FormationRepository;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -13,15 +14,20 @@ class Formation
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['admin'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['admin'])]
     private ?string $nom_formation = null;
 
+
     #[ORM\Column(length: 255)]
+    #[Groups(['admin'])]
     private ?string $description = null;
 
     #[ORM\Column(length: 20, nullable: true)]
+    #[Groups(['admin'])]
     private ?string $session = null;
 
     /**

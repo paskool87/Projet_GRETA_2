@@ -6,6 +6,8 @@ use App\Enum\Jour;
 use App\Repository\TacheRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
+
 
 #[ORM\Entity(repositoryClass: TacheRepository::class)]
 class Tache
@@ -13,34 +15,44 @@ class Tache
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['admin'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'taches')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Fiche $fiche_id = null;
 
+
     #[ORM\Column(length: 250)]
+    #[Groups(['admin'])]
     private ?string $tache_acomplie = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Groups(['admin'])]
     private ?\DateTime $date_tache = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['admin'])]
     private ?bool $autonomie = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['admin'])]
     private ?bool $observation = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['admin'])]
     private ?bool $surveille = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['admin'])]
     private ?bool $absence = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['admin'])]
     private ?bool $ferie = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[Groups(['admin'])]
     private ?\DateTime $date_creation = null;
 
     public function getId(): ?int

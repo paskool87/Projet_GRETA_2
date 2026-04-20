@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Enum\StatusFiche;
 use App\Repository\FicheRepository;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -15,6 +16,7 @@ class Fiche
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['admin'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'fiches')]
@@ -22,18 +24,23 @@ class Fiche
     private ?Alternant $alternant_id = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Groups(['admin'])]
     private ?\DateTime $date_debut = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Groups(['admin'])]
     private ?\DateTime $date_fin = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Groups(['admin'])]
     private ?\DateTime $date_creation = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[Groups(['admin'])]
     private ?\DateTime $date_soumission = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[Groups(['admin'])]
     private ?\DateTime $date_validation = null;
 
     /**
@@ -43,6 +50,7 @@ class Fiche
     private Collection $taches;
 
     #[ORM\Column(type: 'string', enumType: StatusFiche::class)]
+    #[Groups(['admin'])]
     private StatusFiche $status_fiche;
 
     /**

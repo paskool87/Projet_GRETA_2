@@ -6,6 +6,7 @@ use App\Repository\AlternantRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AlternantRepository::class)]
@@ -14,6 +15,7 @@ class Alternant
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['admin'])]
     private ?int $id = null;
 
     /**
@@ -35,17 +37,21 @@ class Alternant
     private Collection $suiviPedagogiques;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    #[Groups(['admin'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?Utilisateur $utilisateur_id = null;
 
     #[ORM\ManyToOne(inversedBy: 'alternants')]
+    #[Groups(['admin'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?Formation $formation_id = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[Groups(['admin'])]
     private ?\DateTime $date_creation = null;
 
     #[ORM\Column]
+    #[Groups(['admin'])]
     private ?bool $actif = null;
 
     public function __construct()

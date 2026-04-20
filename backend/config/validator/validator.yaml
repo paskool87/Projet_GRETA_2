@@ -1,0 +1,29 @@
+# config/validator/validation.yaml
+App\Entity\Utilisateur:
+    properties:
+        nom:
+            - NotNull: ~
+            - Length:
+                  min: 1
+                  max: 45
+        prenom:
+            - NotNull: ~
+            - Length:
+                  min: 1
+                  max: 45
+        email:
+            - Length:
+                  min: 1
+                  max: 64
+            - NotBlank: ~
+            - Email: ~
+        mot_de_passe:
+            - NotBlank: ~
+        actif:
+            - NotNull: ~
+        role:
+            - NotNull: ~
+
+App\Entity\Fiche:
+    constraints:
+        - EnableAutoMapping: ~
