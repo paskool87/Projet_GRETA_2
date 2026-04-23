@@ -1,64 +1,90 @@
 # Documentation Backend
 
-## Lancer le backend
+## Démarrage du backend
 
-(Optionel) Creer le reseau 'local'
+### Prérequis
+
+- Docker et Docker Compose
+- Accès à la racine du projet backend
+- Un terminal ou Docker Desktop
+
+### 1. Créer le réseau Docker local (optionnel)
 
 ```bash
-docker network local
+docker network create local
 ```
 
-1. Lancer le docker compose
+### 2. Démarrer les services Docker
 
 ```bash
 docker compose up -d
 ```
 
-2. Aller dans la console du backend
-   - Soit via un terminal avec cette commande `docker exec -it backend-symfony-parc-attraction bash`
-   - Soit sur docker desktop
-     - puis dans l'onglet "Container"
-     - Cliquer sur "docker"
-     - puis "backend-symfony-parc-attraction"
-     - Aller dans l'onglet "Exec"
-     - puis ecrire "bash"
+### 3. Accéder au conteneur backend
 
-3. Ecrire ces commandeS a la suite
+#### Depuis un terminal
 
 ```bash
-#Installe les dependances presentes dans composer.json
-composer install
-
-#Creé la base de données
-php bin/console doctrine:database:create
-
-#Met a jour la base de données avec les migrations
-php bin/console doctrine:migration:migrate
-
-#Charge des données de test dans la base de données
-php bin/console doctrine:fixture:load
-
-#Gerer les clés JWT pour l'authentification
-Gérer les clés JWT : `php bin/console lexik:jwt:generate-keypair`
-
+docker exec -it backend-symfony-parc-attraction bash
 ```
 
-4. Creer le fichier .env.local a la racine du projet et y ajouter les variables d'environnement suivantes
+#### Depuis Docker Desktop
+
+- Ouvrir l'onglet **Containers**
+- Cliquer sur `backend-symfony-parc-attraction`
+- Aller dans l'onglet **Exec**
+- Taper `bash`
+
+### 4. Installer et préparer le backend
+
+Dans le conteneur backend :
+
+```bash
+composer install
+php bin/console doctrine:database:create
+php bin/console doctrine:migration:migrate
+php bin/console doctrine:fixture:load
+```
+
+### 5. Générer les clés JWT
+
+```bash
+php bin/console lexik:jwt:generate-keypair
+```
+
+### 6. Configurer les variables d'environnement
+
+Créer un fichier `.env.local` à la racine du projet backend et ajouter :
 
 ```env
-# .env.local
 JWT_PASSPHRASE=your_passphrase_here
 ```
 
-5. Le backend est maintenant accessible sur le port défini dans le docker-compose.yml (par défaut probablement 81)
+> Si vous utilisez Docker, vérifiez également le fichier `docker/.env` ou `docker/.env.example` pour les variables liées aux ports.
+
+### 7. Accéder à l'API backend
+
+Par défaut, le backend est exposé sur le port défini dans `docker/.env` :
+
+```text
+BACKEND_PORT=81
+```
+
+L'API est donc généralement disponible sur :
+
+```text
+http://localhost:81
+```
 
 ---
 
 ## Contrat d'API
 
-### Informations generales
+### Informations générales
 
-- Authentification : Toutes les routes demandent un JWT sauf la route pour la connection sinon cette erreur est envoyée
+- Toutes les routes sécurisées exigent un JWT valide.
+- Seule la route de connexion est publique.
+- En cas d'absence de token :
 
 ```json
 {
@@ -67,9 +93,7 @@ JWT_PASSPHRASE=your_passphrase_here
 }
 ```
 
-- Pour tester les comptes, les mot de passe sont previsible. Ils se composent d'un nombre enre 0 et 49 puis "motdepasse" (exemple: "3motdepasse")
-
-- Quand un utilisateur n'a pas le droit d'accés a cette route.Cette erreur est renvoyer.
+- Si l'utilisateur n'a pas le droit d'accéder à la route :
 
 ```json
 {
@@ -78,50 +102,44 @@ JWT_PASSPHRASE=your_passphrase_here
 }
 ```
 
-- pour tester l'API, utiliser un logiciel comme bruno ou postman
-
-- Pour plus de réactiviter de l'api, elle doit etre present sur WSL/Ubuntu
+- Pour tester l'API, utilisez un outil comme Postman ou Bruno.
+- Les mots de passe des comptes de test sont 'password123' pout tous le monde.
 
 ### Authentification
 
-| Champ           | Valeur                                                              |
-| :-------------- | :------------------------------------------------------------------ |
-| **Endpoint**    | `/api/login_check`                                                  |
-| **Méthode**     | `POST`                                                              |
-| **Description** | L'utilisateur envoie ses identifiant et se connecte grace a un JWT. |
-| **Rôles**       | `Public`                                                            |
+| Champ           | Valeur                        |
+| :-------------- | :---------------------------- |
+| **Endpoint**    | `/api/login_check`            |
+| **Méthode**     | `POST`                        |
+| **Description** | Connexion et obtention du JWT |
+| **Rôles**       | `Public`                      |
 
-Requête (Request)
+Requête :
 
 ```json
 {
-  "username": "admin@gmail.com",
-  "password": "50motdepasse"
+  "username": "<email>",
+  "password": "<password>"
 }
 ```
 
-username : Email
-password : Mot de passe
-
-Réponses (Responses)
-
-✅ Succès (Code 200 ou 201)
+Réponse succès :
 
 ```json
 {
-  "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NzY3Nzg2MTAsImV4cCI6MTc3Njc4MjIxMCwicm9sZXMiOlsiUk9MRV9BRE1JTiIsIlJPTEVfVVNFUiJdLCJ1c2VybmFtZSI6ImFkbWluQGdtYWlsLmNvbSJ9.j-1ynL6S53MxcfcCx8sHXX9K7hOSFQW_0obkBQDxKRRhYuAEochCILgVErfPpW34jNy7Z53Seiz4R8vNpriY2OiQkIU0UO4E2UQugF5Y595A_4uTdcA7mtwqMhAeF57VA5_J3vXymyOUVTRf54Kq9L4xIP_AAbSHRkHFMKgg07ckDSW71Qn8kSdcxjQNMhS818zP4qbJz8AYtxqQ6vBtUW8uTZl3mQEoIss4U5stR_1C6viOro11P60tx42zSvE4zVauf8v55oxdBPXTWS9bkg-Vt48UZpdvGPHQAwtDGq1Nvf7v_nrwo3gxpnS9xAaC2YoaRJXuQiWCLHwYjHdAcg",
+  "token": "<jwt_token>",
   "message": "Connexion réussie !",
   "user": {
     "email": "admin@gmail.com",
     "roles": ["ROLE_ADMIN", "ROLE_USER"],
     "nom": "admin",
-    "prenom": "admin"
+    "prenom": "admin",
+    "id_utilisateur": "<user_id>"
   }
 }
 ```
 
-❌ Erreur de Validation (Code 400)
-Si les données envoyées ne sont pas conformes.
+Réponse erreur :
 
 ```json
 {
@@ -132,16 +150,18 @@ Si les données envoyées ne sont pas conformes.
 
 ---
 
-### Inscription (Pas encore prete)
+## Endpoints disponibles
 
-| Champ           | Valeur                                  |
-| :-------------- | :-------------------------------------- |
-| **Endpoint**    | `/api/utilisateur`                      |
-| **Méthode**     | `POST`                                  |
-| **Description** | Permet de creer des comptes un par un . |
-| **Rôles**       | `Admin`                                 |
+### Création d'un utilisateur (en cours)
 
-Requête (Request)
+| Champ           | Valeur                    |
+| :-------------- | :------------------------ |
+| **Endpoint**    | `/api/utilisateur`        |
+| **Méthode**     | `POST`                    |
+| **Description** | Création d'un utilisateur |
+| **Rôles**       | `Admin`                   |
+
+Requête :
 
 ```json
 {
@@ -155,13 +175,11 @@ Requête (Request)
 
 Contraintes :
 
-- "nom" et "prenom" : Il doit etre non null et contenir entre 1 et 45 caracteres
-- "email" : Il doit etre non null, et contenir entre 1 et 64 caracteres et etre valide pour un email
-- "role : Il doit etre non null, et contenir une de ses quatres valeurs en minuscules : "administrateur","professeur","tuteur" ou "alternant"
+- `nom` et `prenom` : champs requis, 1 à 45 caractères
+- `email` : champ requis, 1 à 64 caractères, email valide
+- `role` : champ requis, valeur attendue parmi : `administrateur`, `professeur`, `tuteur`, `alternant`
 
-Réponses (Responses)
-
-✅ Succès (Code 200 ou 201)
+Réponse succès :
 
 ```json
 {
@@ -169,23 +187,16 @@ Réponses (Responses)
 }
 ```
 
-❌ Erreur de Validation (Code 400)
-Si les données envoyées ne sont pas conformes.
+### Création d'utilisateurs via CSV (en cours)
 
-```json
-{}
-```
+| Champ           | Valeur                                     |
+| :-------------- | :----------------------------------------- |
+| **Endpoint**    | `/api/utilisateur/csv`                     |
+| **Méthode**     | `POST`                                     |
+| **Description** | Création de plusieurs utilisateurs via CSV |
+| **Rôles**       | `Admin`                                    |
 
-### Inscription via CSV (Pas encore prete)
-
-| Champ           | Valeur                                                                              |
-| :-------------- | :---------------------------------------------------------------------------------- |
-| **Endpoint**    | `/api/utilisateur/csv`                                                              |
-| **Méthode**     | `POST`                                                                              |
-| **Description** | Permet de creer des comptes via un csv que le frrontend aura prealablement traité . |
-| **Rôles**       | `Admin`                                                                             |
-
-Requête (Request)
+Requête :
 
 ```json
 [
@@ -199,74 +210,210 @@ Requête (Request)
   {
     "nom": "Gauthier",
     "prenom": "Lucie",
-    "email": "LGauthier@gmail.com",
+    "email": "lgauthier@gmail.com",
     "motdepasse": "jdeuapnont",
     "role": "alternant"
   }
 ]
 ```
 
-Meme contraites que l' inscription classique
+Même contraintes que pour la création d'un utilisateur classique.
 
-Réponses (Responses)
+### Validation de fiche
 
-✅ Succès (Code 200 ou 201)
+| Champ           | Valeur                                                           |
+| :-------------- | :--------------------------------------------------------------- |
+| **Endpoint**    | `/api/fiche/{id}/edit`                                           |
+| **Méthode**     | `PUT`                                                            |
+| **Description** | Modification du statut et/ou du validateur d'une fiche           |
+| **Rôles**       | `ROLE_ALTERNANT`, `ROLE_PROFESSEUR`, `ROLE_TUTEUR`, `ROLE_ADMIN` |
 
-```json
-{}
-```
-
-❌ Erreur de Validation (Code 400)
-Si les données envoyées ne sont pas conformes.
-
-```json
-{}
-```
-
-### Validation de fiche (Pas encore prete)
-
-| Champ           | Valeur                                                                |
-| :-------------- | :-------------------------------------------------------------------- |
-| **Endpoint**    | `/api/fiches/{id}/validation`                                         |
-| **Méthode**     | `PATCH`                                                               |
-| **Description** | Le tuteur ou le professeur valide une fiche et ajoute un commentaire. |
-| **Rôles**       | `Tuteur`, `Professeur`, `Admin`                                       |
-
-Requête (Request)
+Requête :
 
 ```json
 {
-  "statut": "Validée"
+  "status": "soumise",
+  "validateur": "entreprise"
 }
 ```
 
-Réponses (Responses)
+Règles métier :
 
-✅ Succès (Code 200 ou 201)
+- `validateur` peut être modifié seulement par un alternant.
+- `validateur` doit être `entreprise` ou `formation`.
+- `status` peut être `soumise`, `valide` ou `criteres_non_remplis`.
+- Seul un alternant peut passer le statut à `soumise`.
+- Seuls les non-alternants peuvent passer le statut à `valide` ou `criteres_non_remplis`.
+- Toute valeur de statut inconnue renvoie une erreur 400.
+- Toute action interdite renvoie une erreur 403.
+
+Réponse succès :
 
 ```json
 {
-  "status": "success",
-  "data": {
-    "id": 123,
-    "message": "Action effectuée avec succès"
-  }
+  "id": 123,
+  "status": "soumise",
+  "validateur": "entreprise"
 }
 ```
 
-❌ Erreur de Validation (Code 400)
-Si les données envoyées ne sont pas conformes.
+### Récupération des fiches (liste)
+
+| Champ           | Valeur                                                           |
+| :-------------- | :--------------------------------------------------------------- |
+| **Endpoint**    | `/api/fiche`                                                     |
+| **Méthode**     | `GET`                                                            |
+| **Description** | Récupère les fiches visibles par l'utilisateur connecté          |
+| **Rôles**       | `ROLE_ALTERNANT`, `ROLE_TUTEUR`, `ROLE_PROFESSEUR`, `ROLE_ADMIN` |
+
+Règles métier :
+
+- `ROLE_ADMIN` voit toutes les fiches.
+- `ROLE_PROFESSEUR` voit les fiches des alternants liés via suivi pédagogique.
+- `ROLE_TUTEUR` voit les fiches des alternants liés via tutorat.
+- `ROLE_ALTERNANT` voit ses propres fiches.
+
+Réponse type :
 
 ```json
 {
-  "status": "error",
-  "message": "Données invalides",
-  "errors": {
-    "champ_1": "Ce champ est obligatoire",
-    "champ_2": "Format d'email incorrect"
-  }
+  "utilisateur": { ... },
+  "fiches": [ ... ]
 }
 ```
+
+### Récupération d'une fiche
+
+| Champ           | Valeur                                                            |
+| :-------------- | :---------------------------------------------------------------- |
+| **Endpoint**    | `/api/fiche/{id}`                                                 |
+| **Méthode**     | `GET`                                                             |
+| **Description** | Récupère une fiche, son alternant, ses tâches et ses commentaires |
+| **Rôles**       | Accès contrôlé par le droit `VIEW` sur la fiche                   |
+
+Réponse type :
+
+```json
+{
+  "fiche": { ... },
+  "alternant": { ... },
+  "tache": [ ... ],
+  "commentaire": [ ... ]
+}
+```
+
+### Création d'une fiche
+
+| Champ           | Valeur                                        |
+| :-------------- | :-------------------------------------------- |
+| **Endpoint**    | `/api/fiche`                                  |
+| **Méthode**     | `POST`                                        |
+| **Description** | Création d'une fiche pour la semaine en cours |
+| **Rôles**       | `ROLE_ALTERNANT`                              |
+
+Requête :
+
+```json
+{
+  "alternant_id": 123
+}
+```
+
+Règles métier :
+
+- Le corps doit inclure `alternant_id`.
+- La fiche est créée pour la semaine en cours (du lundi au vendredi).
+- Le statut initial est `brouillon`.
+- Si une fiche existe déjà pour la semaine, elle est renvoyée sans duplication.
+
+Réponse succès :
+
+- `201 Created` pour une nouvelle fiche.
+- `200 OK` si la fiche existe déjà pour la semaine.
+
+### Ajout / modification de tâches
+
+| Champ           | Valeur                                           |
+| :-------------- | :----------------------------------------------- |
+| **Endpoint**    | `/api/tache`                                     |
+| **Méthode**     | `POST`                                           |
+| **Description** | Ajout ou mise à jour de tâches liées à une fiche |
+| **Rôles**       | `ROLE_ALTERNANT`, `ROLE_ADMIN`                   |
+
+Requête :
+
+```json
+{
+  "fiche_id": 123,
+  "taches": [
+    {
+      "description": "Tache 1",
+      "categorie": "autonomie",
+      "date_tache": "2026-04-20"
+    }
+  ]
+}
+```
+
+Règles métier :
+
+- `fiche_id` et `taches` sont obligatoires.
+- Chaque tâche doit contenir `description`, `categorie` et `date_tache`.
+- `date_tache` doit être dans l'intervalle `date_debut` / `date_fin` de la fiche.
+- Si une tâche existe déjà pour cette date, elle est modifiée.
+- Sinon, la tâche est créée.
+
+Réponse succès :
+
+```json
+[ ... ]
+```
+
+### Ajout de commentaire sur une fiche
+
+| Champ           | Valeur                               |
+| :-------------- | :----------------------------------- |
+| **Endpoint**    | `/api/commentaire`                   |
+| **Méthode**     | `POST`                               |
+| **Description** | Ajout d'un commentaire sur une fiche |
+| **Rôles**       | `ROLE_PROFESSEUR`, `ROLE_TUTEUR`     |
+
+Requête :
+
+```json
+{
+  "fiche_id": 123,
+  "commentaire": "Commentaire sur la fiche"
+}
+```
+
+Règles métier :
+
+- Un professeur ou un tuteur peut commenter une fiche.
+- L'alternant ne peut pas ajouter de commentaire via cette route.
+- Seul le commentaire auteur ou un `ROLE_ADMIN` peut modifier/supprimer un commentaire.
+
+Réponse succès :
+
+```json
+{
+  "id": 456,
+  "commentaire": "Commentaire sur la fiche"
+}
+```
+
+### Modification / suppression de commentaire
+
+- `PUT /api/commentaire/{id}/edit` : seul l'auteur ou `ROLE_ADMIN` peut modifier.
+- `DELETE /api/commentaire/{id}` : seul l'auteur ou `ROLE_ADMIN` peut supprimer.
+
+### Suppression de fiche
+
+- `DELETE /api/fiche/{id}` : réservé à `ROLE_ADMIN`.
+
+### Suppression de tâche
+
+- `DELETE /api/tache/{id}` : réservé à `ROLE_ADMIN`.
 
 ❌ Erreur d'Authentification (Code 401)
 Si le token est expiré ou manquant.
@@ -276,166 +423,4 @@ Si le token est expiré ou manquant.
   "status": "error",
   "message": "Utilisateur non authentifié"
 }
-```
-
-### Recupération des fiches en fonction de l'utilisateur connecté (Pas encore prete)
-
-| Champ           | Valeur                                                                 |
-| :-------------- | :--------------------------------------------------------------------- |
-| **Endpoint**    | `/api/fiches`                                                          |
-| **Méthode**     | `GET`                                                                  |
-| **Description** | Permet de recuperer les fiches concernnées par l'utilisateur connecté. |
-| **Rôles**       | `Alternant`,`Tuteur`, `Professeur`, `Admin`                            |
-
-Réponses (Responses)
-
-✅ Succès (Code 200)
-
-```json
-{
-  "fiche": [
-    {
-      "id": 100,
-      "status": "brouillon",
-      "date_debut": "20-04-2026",
-      "date_fin": "24-04-2026"
-    },
-    {
-      "id": 101,
-      "status": "soumise",
-      "date_debut": "13-04-2026",
-      "date_fin": "17-04-2026"
-    },
-    {
-      "id": 102,
-      "status": "soumise",
-      "date_debut": "06-04-2026",
-      "date_fin": "10-04-2026"
-    },
-    {
-      "id": 103,
-      "status": "soumise",
-      "date_debut": "30-03-2026",
-      "date_fin": "04-04-2026"
-    },
-    {
-      "id": 104,
-      "status": "valide",
-      "date_debut": "23-03-2026",
-      "date_fin": "27-03-2026"
-    },
-    {
-      "id": 105,
-      "status": "valide",
-      "date_debut": "16-03-2026",
-      "date_fin": "20-03-2026"
-    }
-  ]
-}
-```
-
-### Recupération des taches d'une fiche (Pas encore prete)
-
-| Champ           | Valeur                                                                  |
-| :-------------- | :---------------------------------------------------------------------- |
-| **Endpoint**    | `/api/fiches/{id}`                                                      |
-| **Méthode**     | `GET`                                                                   |
-| **Description** | Permet de recuperer les fiches de l'alternant correspondant a cette id. |
-| **Rôles**       | `Alternant`,`Tuteur`, `Professeur`, `Admin`                             |
-
-Réponses (Responses)
-
-✅ Succès (Code 200 ou 201)
-
-```json
-[
-  {
-    "id": 1,
-    "description": "Tache 1",
-    "date": "20-04-2026",
-    "etat": "autonomie"
-  },
-  {
-    "id": 2,
-    "description": "Tache 2",
-    "date": "21-04-2026",
-    "etat": "observation"
-  },
-  { "id": 3, "description": "Tache 3", "date": "22-04-2026", "etat": "ferie" },
-  { "id": 4, "description": "Tache 4", "date": "23-04-2026", "etat": "absent" },
-  {
-    "id": 5,
-    "description": "Tache 5",
-    "date": "24-04-2026",
-    "etat": "surveille"
-  }
-]
-```
-
-❌ Erreur de Validation (Code 400)
-
-```json
-{ "erreur": "Taches de la fiche non trouvée" }
-```
-
-### Creation/Modification d'une fiche (Pas encore prete)
-
-| Champ           | Valeur                                                     |
-| :-------------- | :--------------------------------------------------------- |
-| **Endpoint**    | `/api/fiches/`                                             |
-| **Méthode**     | `POST`                                                     |
-| **Description** | Permet de créer ou modifier une fiche avec ou sans taches. |
-| **Rôles**       | `Alternant`, `Admin`                                       |
-
-Requête
-
-```json
-{
-  "date_debut": "2026-04-20",
-  "date_fin": "2026-04-24",
-  "taches": [
-    {
-      "description": "Tache 1",
-      "date": "2026-04-20",
-      "etat": "autonomie"
-    },
-    {
-      "description": "Tache 2",
-      "date": "2026-04-21",
-      "etat": "observation"
-    }
-  ]
-}
-```
-
-❌ Erreur de Validation (Code 400)
-Si les données envoyées ne sont pas conformes.
-
-```json
-{ "erreur": "Données invalides" }
-```
-
-### Ajout de commentaire sur une fiche (Pas encore prete)
-
-| Champ           | Valeur                              |
-| :-------------- | :---------------------------------- |
-| **Endpoint**    | `/api/commentaire/`                 |
-| **Méthode**     | `POST`                              |
-| **Description** | Ajout de commentaire sur une fiche. |
-| **Rôles**       | `Professeur`, `Tuteur`, `Admin`     |
-
-Requête
-
-```json
-{
-  "fiche_id": 123,
-  "commentaire": "Commentaire sur la fiche"
-}
-```
-
-❌ Erreur de Validation (Code 400)
-Si les données envoyées ne sont pas conformes.
-
-```json
-{ "erreur": "Données invalides" }
 ```

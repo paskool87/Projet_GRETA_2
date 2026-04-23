@@ -4,7 +4,7 @@ namespace App\Enum;
 
 enum Role: string
 {
-    case ALTERNAT            = "ALTERNANT";
+    case ALTERNANT            = "ALTERNANT";
     case TUTEUR              = "TUTEUR";
     case PROFESSEUR_REFERENT = "PROFESSEUR_REFERENT";
     case ADMINISTRATEUR      = "ADMINISTRATEUR";
@@ -12,7 +12,7 @@ enum Role: string
     public function label(): string
     {
         return match ($this) {
-            self::ALTERNAT            => "Alternant",
+            self::ALTERNANT            => "Alternant",
             self::TUTEUR              => "Tuteur",
             self::PROFESSEUR_REFERENT => "Professeur Référent",
             self::ADMINISTRATEUR      => "Administrateur",

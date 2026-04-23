@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Alternant;
 use App\Entity\Fiche;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -40,4 +41,18 @@ class FicheRepository extends ServiceEntityRepository
     //            ->getOneOrNullResult()
     //        ;
     //    }
+
+    public function findOneBySemaine(Alternant $alternant, \DateTimeInterface $debut, \DateTimeInterface $fin): ?Fiche
+    {
+        return $this->createQueryBuilder('f')
+            ->andWhere('f.alternant = :alternant')
+            ->andWhere('f.date_debut >= :debut')
+            ->andWhere('f.date_debut <= :fin')
+            ->setParameter('alternant', $alternant)
+            ->setParameter('debut', $debut)
+            ->setParameter('fin', $fin)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

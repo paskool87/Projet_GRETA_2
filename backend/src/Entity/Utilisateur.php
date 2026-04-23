@@ -24,32 +24,29 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['admin', 'user'])]
+    #[Groups(['user:read'])]
     private ?int $id = null;
 
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     #[ORM\Column(length: 45)]
     private ?string $nom = null;
 
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     #[ORM\Column(length: 45)]
     private ?string $prenom = null;
 
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     #[ORM\Column(length: 64)]
     private ?string $email = null;
 
     #[ORM\Column(length: 80)]
     private ?string $mot_de_passe = null;
 
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     #[ORM\Column(length: 240)]
     private ?string $role;
 
-    #[ORM\Column(nullable: true)]
-    private ?array $permission;
-
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     #[ORM\Column]
     private ?bool $actif = null;
 
@@ -58,7 +55,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, Tutorat>
      */
-    #[ORM\OneToMany(targetEntity: Tutorat::class, mappedBy: 'tuteur_id')]
+    #[ORM\OneToMany(targetEntity: Tutorat::class, mappedBy: 'tuteur')]
     private Collection $tutorats;
 
     /**
@@ -68,13 +65,20 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     private Collection $suiviPedagogiques;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     private ?\DateTime $date_creation = null;
+
+    /**
+     * @var Collection<int, Commentaire>
+     */
+    #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'auteur')]
+    private Collection $commentaires;
 
     public function __construct()
     {
         $this->tutorats = new ArrayCollection();
         $this->suiviPedagogiques = new ArrayCollection();
+        $this->commentaires = new ArrayCollection();
     }
 
     public function getUserIdentifier(): string
@@ -84,22 +88,17 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getRoles(): array
     {
-        return match ($this->role) {
-            Role::ADMINISTRATEUR->label()       => ['ROLE_ADMIN', 'ROLE_USER'],
-            Role::PROFESSEUR_REFERENT->label()  => ['ROLE_PROFESSEUR', 'ROLE_USER'],
-            Role::ALTERNAT->label()             => ['ROLE_ALTERNANT', 'ROLE_USER'],
-            Role::TUTEUR->label()               => ['ROLE_TUTEUR', 'ROLE_USER'],
+        return match (Role::tryFrom($this->role)) {
+            Role::ADMINISTRATEUR       => ['ROLE_ADMIN', 'ROLE_USER'],
+            Role::PROFESSEUR_REFERENT  => ['ROLE_PROFESSEUR', 'ROLE_USER'],
+            Role::ALTERNANT             => ['ROLE_ALTERNANT', 'ROLE_USER'],
+            Role::TUTEUR               => ['ROLE_TUTEUR', 'ROLE_USER'],
             default                             => ['ROLE_USER'],
         };
     }
 
 
-    public function setRoles(array $roles): static
-    {
-        $this->permission = $roles;
 
-        return $this;
-    }
 
     public function getPassword(): ?string
     {
@@ -112,7 +111,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
-
 
     public function getId(): ?int
     {
@@ -198,7 +196,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if (!$this->tutorats->contains($tutorat)) {
             $this->tutorats->add($tutorat);
-            $tutorat->setTuteurId($this);
+            $tutorat->setTuteur($this);
         }
 
         return $this;
@@ -208,8 +206,8 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if ($this->tutorats->removeElement($tutorat)) {
             // set the owning side to null (unless already changed)
-            if ($tutorat->getTuteurId() === $this) {
-                $tutorat->setTuteurId(null);
+            if ($tutorat->getTuteur() === $this) {
+                $tutorat->setTuteur(null);
             }
         }
 
@@ -266,6 +264,36 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setRole(string $role): static
     {
         $this->role = $role;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Commentaire>
+     */
+    public function getCommentaires(): Collection
+    {
+        return $this->commentaires;
+    }
+
+    public function addCommentaire(Commentaire $commentaire): static
+    {
+        if (!$this->commentaires->contains($commentaire)) {
+            $this->commentaires->add($commentaire);
+            $commentaire->setAuteur($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCommentaire(Commentaire $commentaire): static
+    {
+        if ($this->commentaires->removeElement($commentaire)) {
+            // set the owning side to null (unless already changed)
+            if ($commentaire->getAuteur() === $this) {
+                $commentaire->setAuteur(null);
+            }
+        }
 
         return $this;
     }

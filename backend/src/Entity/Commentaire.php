@@ -7,6 +7,7 @@ use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Doctrine\ORM\Mapping as ORM;
+use DateTime;
 
 #[ORM\Entity(repositoryClass: CommentaireRepository::class)]
 class Commentaire
@@ -14,26 +15,31 @@ class Commentaire
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 200)]
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     private ?string $commentaire = null;
 
 
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?utilisateur $auteur_id = null;
 
     #[ORM\ManyToOne(inversedBy: 'commentaires')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Fiche $fiche_id = null;
+    private ?Fiche $fiche = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Groups(['admin'])]
-    private ?\DateTime $date_creation = null;
+    #[Groups(['user:read'])]
+    private ?DateTime $date_creation = null;
 
+    #[ORM\ManyToOne(inversedBy: 'commentaires')]
+    private ?Utilisateur $auteur = null;
+
+
+    public function __construct()
+    {
+        $this->date_creation = new DateTime("now");
+    }
     public function getId(): ?int
     {
         return $this->id;
@@ -58,38 +64,40 @@ class Commentaire
         return $this;
     }
 
-    public function getFicheId(): ?Fiche
-    {
-        return $this->fiche_id;
-    }
 
-    public function getAuteurId(): ?utilisateur
-    {
-        return $this->auteur_id;
-    }
 
-    public function setAuteurId(?utilisateur $auteur_id): static
-    {
-        $this->auteur_id = $auteur_id;
-
-        return $this;
-    }
-
-    public function setFicheId(?Fiche $fiche_id): static
-    {
-        $this->fiche_id = $fiche_id;
-
-        return $this;
-    }
-
-    public function getDateCreation(): ?\DateTime
+    public function getDateCreation(): ?DateTime
     {
         return $this->date_creation;
     }
 
-    public function setDateCreation(\DateTime $date_creation): static
+    public function setDateCreation(DateTime $date_creation): static
     {
         $this->date_creation = $date_creation;
+
+        return $this;
+    }
+
+    public function getAuteur(): ?Utilisateur
+    {
+        return $this->auteur;
+    }
+
+    public function setAuteur(?Utilisateur $auteur): static
+    {
+        $this->auteur = $auteur;
+
+        return $this;
+    }
+
+    public function getFiche(): ?Fiche
+    {
+        return $this->fiche;
+    }
+
+    public function setFiche(?Fiche $fiche): static
+    {
+        $this->fiche = $fiche;
 
         return $this;
     }

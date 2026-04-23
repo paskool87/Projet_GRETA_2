@@ -15,43 +15,42 @@ class Alternant
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     private ?int $id = null;
 
     /**
      * @var Collection<int, Fiche>
      */
-    #[ORM\OneToMany(targetEntity: Fiche::class, mappedBy: 'alternant_id')]
+    #[ORM\OneToMany(targetEntity: Fiche::class, mappedBy: 'alternant')]
     private Collection $fiches;
 
     /**
      * @var Collection<int, Tutorat>
      */
-    #[ORM\OneToMany(targetEntity: Tutorat::class, mappedBy: 'alternant_id')]
+    #[ORM\OneToMany(targetEntity: Tutorat::class, mappedBy: 'alternant')]
     private Collection $tutorats;
 
     /**
      * @var Collection<int, SuiviPedagogique>
      */
-    #[ORM\OneToMany(targetEntity: SuiviPedagogique::class, mappedBy: 'alternant_id')]
+    #[ORM\OneToMany(targetEntity: SuiviPedagogique::class, mappedBy: 'alternant')]
     private Collection $suiviPedagogiques;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
-    #[Groups(['admin'])]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Utilisateur $utilisateur_id = null;
+    #[Groups(['user:read'])]
+    private ?Utilisateur $utilisateur = null;
 
     #[ORM\ManyToOne(inversedBy: 'alternants')]
-    #[Groups(['admin'])]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Formation $formation_id = null;
+    private ?Formation $formation = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     private ?\DateTime $date_creation = null;
 
     #[ORM\Column]
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     private ?bool $actif = null;
 
     public function __construct()
@@ -85,7 +84,7 @@ class Alternant
     {
         if (!$this->fiches->contains($fich)) {
             $this->fiches->add($fich);
-            $fich->setAlternantId($this);
+            $fich->setAlternant($this);
         }
 
         return $this;
@@ -95,8 +94,8 @@ class Alternant
     {
         if ($this->fiches->removeElement($fich)) {
             // set the owning side to null (unless already changed)
-            if ($fich->getAlternantId() === $this) {
-                $fich->setAlternantId(null);
+            if ($fich->getAlternant() === $this) {
+                $fich->setAlternant(null);
             }
         }
 
@@ -115,7 +114,7 @@ class Alternant
     {
         if (!$this->suiviPedagogiques->contains($suiviPedagogique)) {
             $this->suiviPedagogiques->add($suiviPedagogique);
-            $suiviPedagogique->setAlternantId($this);
+            $suiviPedagogique->setAlternant($this);
         }
 
         return $this;
@@ -125,34 +124,34 @@ class Alternant
     {
         if ($this->suiviPedagogiques->removeElement($suiviPedagogique)) {
             // set the owning side to null (unless already changed)
-            if ($suiviPedagogique->getAlternantId() === $this) {
-                $suiviPedagogique->setAlternantId(null);
+            if ($suiviPedagogique->getAlternant() === $this) {
+                $suiviPedagogique->setAlternant(null);
             }
         }
 
         return $this;
     }
 
-    public function getUtilisateurId(): ?Utilisateur
+    public function getUtilisateur(): ?Utilisateur
     {
-        return $this->utilisateur_id;
+        return $this->utilisateur;
     }
 
-    public function setUtilisateurId(Utilisateur $utilisateur_id): static
+    public function setUtilisateur(Utilisateur $utilisateur): static
     {
-        $this->utilisateur_id = $utilisateur_id;
+        $this->utilisateur = $utilisateur;
 
         return $this;
     }
 
     public function getFormationId(): ?Formation
     {
-        return $this->formation_id;
+        return $this->formation;
     }
 
-    public function setFormationId(?Formation $formation_id): static
+    public function setFormationId(?Formation $formation): static
     {
-        $this->formation_id = $formation_id;
+        $this->formation = $formation;
 
         return $this;
     }
@@ -193,7 +192,7 @@ class Alternant
     {
         if (!$this->tutorats->contains($tutorat)) {
             $this->tutorats->add($tutorat);
-            $tutorat->setAlternantId($this);
+            $tutorat->setAlternant($this);
         }
 
         return $this;
@@ -203,10 +202,22 @@ class Alternant
     {
         if ($this->tutorats->removeElement($tutorat)) {
             // set the owning side to null (unless already changed)
-            if ($tutorat->getAlternantId() === $this) {
-                $tutorat->setAlternantId(null);
+            if ($tutorat->getAlternant() === $this) {
+                $tutorat->setAlternant(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getFormation(): ?Formation
+    {
+        return $this->formation;
+    }
+
+    public function setFormation(?Formation $formation): static
+    {
+        $this->formation = $formation;
 
         return $this;
     }

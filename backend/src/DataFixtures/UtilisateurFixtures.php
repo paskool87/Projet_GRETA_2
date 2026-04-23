@@ -12,7 +12,6 @@ use App\Entity\Tutorat;
 use App\Entity\Utilisateur;
 use App\Enum\Role;
 use App\Enum\StatusFiche;
-use DateInterval;
 use DateTime;
 use Faker;
 use Doctrine\Bundle\FixturesBundle\Fixture;
@@ -29,184 +28,235 @@ class UtilisateurFixtures extends Fixture
     {
         $faker = Faker\Factory::create("fr_FR");
         date_default_timezone_set("UTC");
-        // $utilisateur = new utilisateur();
-        // $manager->persist($utilisateur);
-        $utilisateurs = [];
+
         $alternants = [];
         $professeurs = [];
-        $tuteurs = [];
-        $formations = [];
 
-        for ($i = 0; $i < 5; $i++) {
+        // Récupération des données calculées
+        $formation_presets = $this->genererFormationsAutomatique();
+
+        foreach ($formation_presets as $data) {
+            // 1. Création de l'entité Formation
             $formation = new Formation();
-            $formation->setNomFormation($faker->word() . "" . $i)
-                ->setDescription($faker->sentence())
-                ->setSession($faker->date("Y") . "-" . $faker->date("Y"));
-            $manager->persist($formation);
-            $formations[] = $formation;
-        };
+            $formation->setNomFormation($data['nom']) // Utilise le nom du preset
+                ->setDescription($data['descrription'])
+                ->setSession($data['session'])
+                ->setDateDebut(new DateTime($data['datedebut'])) // Utilise la date calculée
+                ->setDateFin(new DateTime($data['datefin']));
 
-        //Creation des professeurs
-        for ($i = 0; $i < 5; $i++) {
-            $professeur = new Utilisateur();
-            $professeur->setActif($faker->boolean(90))
-                ->setEmail($faker->email())
-                ->setNom($faker->firstName())
-                ->setPrenom($faker->lastName())
-                ->setMotDePasse(
-                    $this->passwordHasher->hashPassword(
-                        $professeur,
-                        $i . "motdepasse"
-                    )
-                )
-                ->setRole(Role::PROFESSEUR_REFERENT->label());
+            $manager->persist($formation);
+
+            // 2. Création du professeur référent pour cette formation
+            $professeur = $this->creerUtilisateur(
+                Role::PROFESSEUR_REFERENT->name,
+                $faker->firstName(),
+                $faker->lastName(),
+                $faker->boolean(95)
+            );
             $manager->persist($professeur);
             $professeurs[] = $professeur;
-        }
 
-        for ($i = 0; $i < 50; $i++) {
-            // Creation desutilisateur pour les alternants
-            $u_alternant = new Utilisateur();
-            $u_alternant->setActif($faker->boolean(90))
-                ->setEmail($faker->email())
-                ->setNom($faker->firstName())
-                ->setPrenom($faker->lastName())
-                ->setMotDePasse(
-                    $this->passwordHasher->hashPassword(
-                        $u_alternant,
-                        $i . "motdepasse"
-                    )
-                )
-                ->setRole(Role::ALTERNAT->label());
-            $manager->persist($u_alternant);
+            // 3. Création de 10 alternants par formation
+            for ($a = 0; $a < 10; $a++) {
+                $u_alternant = $this->creerUtilisateur(
+                    Role::ALTERNANT->name, // Correction : Role Alternant ici
+                    $faker->firstName(),
+                    $faker->lastName(),
+                    $faker->boolean(95)
+                );
+                $manager->persist($u_alternant);
 
-            // Creation des alternant 
-            $alternant = new Alternant();
-            $alternant->setActif($faker->boolean(95))
-                ->setDateCreation(new DateTime("now"))
-                ->setUtilisateurId($u_alternant)
-                ->setFormationId($formations[array_rand($formations)]);
-            $manager->persist($alternant);
-            $alternants[] = $alternant;
+                $alternant = new Alternant();
+                $alternant->setActif($u_alternant->isActif())
+                    ->setDateCreation(new DateTime("now"))
+                    ->setUtilisateur($u_alternant)
+                    ->setFormation($formation);
+                $manager->persist($alternant);
+                $alternants[] = $alternant;
 
-            //Creation des suivi pedagogique
-            $suiviPedagogique = new SuiviPedagogique();
-            $id = $i % 5 > 5 ? $i % 5 : 0;
-            $suiviPedagogique
-                ->setAlternantId($alternant)
-                ->setFormationId($alternant->getFormationId())
-                ->setProfesseur($professeurs[$id])
-                ->setEstPrincipal(true)
-                ->setActif(true)
-                ->setDateDebut(new DateTime())
-                ->setDateFin($faker->dateTimeBetween("now", "+30 years"));
-            $manager->persist($suiviPedagogique);
-        };
+                // Suivi pédagogique (aligné sur les dates de la formation)
+                $suiviPedagogique = new SuiviPedagogique();
+                $suiviPedagogique
+                    ->setAlternant($alternant)
+                    ->setFormation($formation)
+                    ->setProfesseur($professeur)
+                    ->setEstPrincipal(true)
+                    ->setActif($professeur->isActif() && $u_alternant->isActif())
+                    ->setDateDebut($formation->getDateDebut())
+                    ->setDateFin($formation->getDateFin());
+                $manager->persist($suiviPedagogique);
 
-        // Creation des tuteurs
-        for ($i = 0; $i < 50; $i++) {
-            $tuteur = new Utilisateur();
-            $tuteur->setActif($faker->boolean(90))
-                ->setEmail($faker->email())
-                ->setNom($faker->firstName())
-                ->setPrenom($faker->lastName())
-                ->setMotDePasse(
-                    $this->passwordHasher->hashPassword(
-                        $tuteur,
-                        $i . "motdepasse"
-                    )
-                )
-                ->setRole(Role::TUTEUR->label());
-            $manager->persist($tuteur);
-
-            $tuteurs[] = $tuteur;
-
-            // Creation des tutorats
-            $tutorat = new Tutorat();
-            $tutorat->setTuteurId($tuteur)
-                ->setAlternantId($alternants[$i])
-                ->setActif(true)
-                ->setDateDebut(new DateTime())
-                ->setDateFin($faker->dateTimeBetween("now", "+30 years"));
-            $manager->persist($tutorat);
-        };
-
-
-        //Creation de l'administrateur
-        $admin = new Utilisateur();
-        $admin->setActif(true)
-            ->setEmail("admin@gmail.com")
-            ->setNom("admin")
-            ->setPrenom("admin")
-            ->setMotDePasse(
-                $this->passwordHasher->hashPassword($admin, $i . "motdepasse"),
-
-            )
-            ->setRole(Role::ADMINISTRATEUR->label());
-        $manager->persist($admin);
-        $admin = new Utilisateur();
-
-
-        //Creation des fiches, taches et commentaire
-        //2 fiches par alternant, 5 taches par fiches
-
-        $utilisateurs = $professeurs + $tuteurs;
-        for ($i = 0; $i < 2; $i++) {
-            foreach ($alternants as $alternant) {
-                $fiche = new Fiche();
-                $rand_Role = $faker->randomElement(StatusFiche::cases());
-                $debut = $faker->dateTime();
-                $fin = date_add($debut, new DateInterval("P7D"));
-                $fiche->setAlternantId($alternant)
-                    ->setDateDebut($debut)
-                    ->setDateFin($fin)
-                    ->setStatusFiche($rand_Role)
-                    ->setDateCreation($debut)
-                ;
-                if ($rand_Role == StatusFiche::SOUMISE || $rand_Role == StatusFiche::VALIDE) {
-                    $soumis = $faker->dateTimeBetween($debut, $fin);
-                    $fiche->setDateSoumission($soumis);
-                    if ($rand_Role == StatusFiche::VALIDE) {
-                        $fiche->setDateValidation($faker->dateTimeBetween($soumis, $fin));
-                    }
-                }
-                $manager->persist($fiche);
-
-                if ($faker->boolean(50)) {
-                    $commentaire = new Commentaire();
-                    $commentaire->setFicheId($fiche)
-                        ->setCommentaire($faker->sentence())
-                        ->setAuteurId($faker->randomElement($utilisateurs))->setDateCreation($faker->dateTimeBetween($debut, $fin))
-                    ;
-                    $manager->persist($commentaire);
-                }
-                for ($i = 0; $i < $faker->numberBetween(1, 5); $i++) {
-                    $tache = new Tache();
-                    $etat = $faker->numberBetween(1, 5);
-                    $message = $faker->sentence($faker->numberBetween(1, 20));
-                    if ($etat >= 3) {
-                        match ($etat) {
-                            1 => $tache->setAutonomie(true),
-                            2 => $tache->setObservation(true),
-                            3 => $tache->setSurveille(true),
-                            default => $tache->setAutonomie(true),
-                        };
-                    } else {
-                        $message = $etat == 4 ? "Absence" : "Jours feries";
-                        match ($etat) {
-                            4 => $tache->setAbsence(true),
-                            5 => $tache->setFerie(true),
-                            default => $tache->setAbsence(true),
-                        };
-                    }
-                    $tache->setTacheAcomplie($message);
-                    $tache->setFicheId($fiche)
-                        ->setDateTache($faker->dateTimeBetween($debut, $fin))
-                        ->setDateCreation($faker->dateTimeBetween($debut, $fin));
-                    $manager->persist($tache);
-                }
+                $this->creerFichesPourAlternant($alternant, $formation, $professeur, $manager, $faker);
             }
         }
+
+        // 4. Création des tuteurs (1 par alternant)
+        foreach ($alternants as $alternant) {
+            $tuteur = $this->creerUtilisateur(
+                Role::TUTEUR->name,
+                $faker->firstName(),
+                $faker->lastName(),
+                $faker->boolean(95)
+            );
+            $manager->persist($tuteur);
+
+            $tutorat = new Tutorat();
+            $tutorat->setTuteur($tuteur)
+                ->setAlternant($alternant)
+                ->setActif($alternant->isActif() && $tuteur->isActif())
+                ->setDateDebut($alternant->getFormation()->getDateDebut())
+                ->setDateFin($alternant->getFormation()->getDateFin());
+            $manager->persist($tutorat);
+        }
+
+        // 5. Création de l'administrateur
+        $admin = $this->creerUtilisateur(
+            Role::ADMINISTRATEUR->name,
+            "admin",
+            "admin",
+            true
+        );
+        $manager->persist($admin);
+
         $manager->flush();
+    }
+
+    private function creerUtilisateur(string $role, string $nom, string $prenom, bool $actif): Utilisateur
+    {
+        $u = new Utilisateur();
+        $u->setActif($actif)
+            ->setEmail(strtolower($nom . "." . $prenom) . "@gmail.com")
+            ->setNom($nom)
+            ->setPrenom($prenom)
+            ->setMotDePasse($this->passwordHasher->hashPassword($u, "password123"))
+            ->setRole($role)
+            ->setDateCreation(new DateTime("now"));
+        return $u;
+    }
+
+    private function creerFichesPourAlternant(Alternant $alternant, Formation $formation, Utilisateur $commentaireAuteur, ObjectManager $manager, \Faker\Generator $faker): void
+    {
+        $statuses = [
+            StatusFiche::VALIDE,
+            StatusFiche::CRITERES_NON_REMPLIS,
+            StatusFiche::VALIDE,
+            StatusFiche::SOUMISE,
+            StatusFiche::BROUILLON,
+        ];
+
+        $periodeDebut = (clone $formation->getDateDebut())->setTime(9, 0, 0);
+
+        for ($i = 0; $i < 5; $i++) {
+            $ficheDebut = (clone $periodeDebut)->modify("+$i week");
+            if ($ficheDebut > $formation->getDateFin()) {
+                break;
+            }
+
+            $ficheFin = (clone $ficheDebut)->modify('friday this week')->setTime(17, 0, 0);
+            if ($ficheFin > $formation->getDateFin()) {
+                $ficheFin = (clone $formation->getDateFin())->setTime(17, 0, 0);
+            }
+
+            $status = $statuses[$i];
+            $validateur = $i % 2 === 0 ? 'entreprise' : 'formation';
+            $fiche = new Fiche();
+            $fiche->setAlternant($alternant)
+                ->setDateDebut($ficheDebut)
+                ->setDateFin($ficheFin)
+                ->setDateCreation(new DateTime('now'))
+                ->setStatusFiche($status)
+                ->setValidateur($validateur);
+
+            if ($status !== StatusFiche::BROUILLON) {
+                $fiche->setDateSoumission(clone $ficheFin);
+            }
+            if ($status === StatusFiche::VALIDE || $status === StatusFiche::CRITERES_NON_REMPLIS) {
+                $fiche->setDateValidation(clone $ficheFin);
+            }
+
+            $manager->persist($fiche);
+
+            for ($j = 0; $j < 5; $j++) {
+                $dateTache = (clone $ficheDebut)->modify("+$j day");
+                if ($dateTache > $ficheFin) {
+                    $dateTache = clone $ficheFin;
+                }
+
+                $tache = new Tache();
+                $description = sprintf('Tâche %d pour la fiche %d de %s', $j + 1, $i + 1, $alternant->getUtilisateur()?->getPrenom() ?? 'alternant');
+                $tache->setDescription($description)
+                    ->setDateTache($dateTache)
+                    ->setDateCreation(new DateTime('now'))
+                    ->setFiche($fiche);
+
+                $tache->setCategorie($faker->randomElement(['autonomie', 'surveille', 'observation', 'ferie', 'absence']));
+
+                $manager->persist($tache);
+                $fiche->addTach($tache);
+            }
+
+            if ($status === StatusFiche::CRITERES_NON_REMPLIS) {
+                $commentaire = new Commentaire();
+                $commentaire->setCommentaire('Une tâche est en critères non remplis, merci de vérifier les éléments manquants.')
+                    ->setDateCreation(new DateTime('now'))
+                    ->setAuteur($commentaireAuteur)
+                    ->setFiche($fiche);
+
+                $manager->persist($commentaire);
+                $fiche->addCommentaire($commentaire);
+            }
+        }
+    }
+
+    private function genererFormationsAutomatique()
+    {
+        $config = [
+            "Formation DWWM" => 9,
+            "DUT"            => 24,
+            "BTS"            => 36
+        ];
+
+        $aujourdhui = new DateTime('2026-04-01');
+
+        $debutDWWM1 = (clone $aujourdhui)->modify("-4 months");
+        $debutDWWM2 = (clone $aujourdhui)->modify("-2 months");
+        $debutDUT1 = new DateTime("first Monday of September 2024");
+        $debutDUT2 = new DateTime("first Monday of September 2025");
+        $debutBTS  = new DateTime("first Monday of September 2024");
+
+        $entrees = [
+            ["nom" => "Formation DWWM", "session" => "session 1(9 mois)", "debut" => $debutDWWM1->format("Y-m-d")],
+            ["nom" => "Formation DWWM", "session" => "session 2(9 mois)", "debut" => $debutDWWM2->format("Y-m-d")],
+            ["nom" => "DUT", "session" => "2024/2026", "debut" => $debutDUT1->format("Y-m-d")],
+            ["nom" => "DUT", "session" => "2025/2027", "debut" => $debutDUT2->format("Y-m-d")],
+            ["nom" => "BTS", "session" => "2024/2027", "debut" => $debutBTS->format("Y-m-d")]
+        ];
+
+        $formations = [];
+        foreach ($entrees as $item) {
+            $nom = $item['nom'];
+            $dateDebut = new DateTime($item['debut'] . " 09:00:00");
+            $dateFin = clone $dateDebut;
+
+            if (isset($config[$nom])) {
+                $dureeMois = $config[$nom];
+                $dateFin->modify("+$dureeMois months");
+                if ($nom === "DUT" || $nom === "BTS") {
+                    $dateFin->modify("last friday of June " . $dateFin->format('Y'));
+                } else {
+                    $dateFin->modify("-3 days");
+                }
+                $dateFin->setTime(17, 0, 0);
+            }
+
+            $formations[] = [
+                "nom" => $nom,
+                "descrription" => "Cursus $nom - Session " . $item['session'],
+                "session" => $item['session'],
+                "datedebut" => $dateDebut->format('Y-m-d H:i:s'),
+                "datefin" => $dateFin->format('Y-m-d H:i:s')
+            ];
+        }
+        return $formations;
     }
 }

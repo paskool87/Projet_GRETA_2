@@ -16,53 +16,59 @@ class Fiche
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'fiches')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Alternant $alternant_id = null;
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Alternant $alternant = null;
+
+
+    #[ORM\Column(nullable: true)]
+    #[Groups(['user:read'])]
+    private ?string $validateur = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     private ?\DateTime $date_debut = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     private ?\DateTime $date_fin = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Groups(['admin'])]
+    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[Groups(['user:read'])]
     private ?\DateTime $date_creation = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     private ?\DateTime $date_soumission = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     private ?\DateTime $date_validation = null;
 
     /**
      * @var Collection<int, Tache>
      */
-    #[ORM\OneToMany(targetEntity: Tache::class, mappedBy: 'fiche_id')]
+    #[ORM\OneToMany(targetEntity: Tache::class, mappedBy: 'fiche', cascade: ['persist'], orphanRemoval: true)]
     private Collection $taches;
 
     #[ORM\Column(type: 'string', enumType: StatusFiche::class)]
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     private StatusFiche $status_fiche;
 
     /**
      * @var Collection<int, Commentaire>
      */
-    #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'fiche_id')]
+    #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'fiche', cascade: ['persist'], orphanRemoval: true)]
     private Collection $commentaires;
 
     public function __construct()
     {
         $this->taches = new ArrayCollection();
         $this->commentaires = new ArrayCollection();
+        $this->date_creation = new \DateTime();
     }
 
     public function getId(): ?int
@@ -77,17 +83,6 @@ class Fiche
         return $this;
     }
 
-    public function getAlternantId(): ?Alternant
-    {
-        return $this->alternant_id;
-    }
-
-    public function setAlternantId(?Alternant $alternant_id): static
-    {
-        $this->alternant_id = $alternant_id;
-
-        return $this;
-    }
 
     /**
      * @return Collection<int, Tache>
@@ -101,7 +96,7 @@ class Fiche
     {
         if (!$this->taches->contains($tach)) {
             $this->taches->add($tach);
-            $tach->setFicheId($this);
+            $tach->setFiche($this);
         }
 
         return $this;
@@ -111,8 +106,8 @@ class Fiche
     {
         if ($this->taches->removeElement($tach)) {
             // set the owning side to null (unless already changed)
-            if ($tach->getFicheId() === $this) {
-                $tach->setFicheId(null);
+            if ($tach->getFiche() === $this) {
+                $tach->setFiche(null);
             }
         }
 
@@ -143,7 +138,7 @@ class Fiche
     {
         if (!$this->commentaires->contains($commentaire)) {
             $this->commentaires->add($commentaire);
-            $commentaire->setFicheId($this);
+            $commentaire->setFiche($this);
         }
 
         return $this;
@@ -153,8 +148,8 @@ class Fiche
     {
         if ($this->commentaires->removeElement($commentaire)) {
             // set the owning side to null (unless already changed)
-            if ($commentaire->getFicheId() === $this) {
-                $commentaire->setFicheId(null);
+            if ($commentaire->getFiche() === $this) {
+                $commentaire->setFiche(null);
             }
         }
 
@@ -214,9 +209,33 @@ class Fiche
         return $this->date_creation;
     }
 
-    public function setDateCreation(\DateTime $date_creation): static
+    public function setDateCreation(?\DateTime $date_creation): static
     {
         $this->date_creation = $date_creation;
+
+        return $this;
+    }
+
+    public function getValidateur(): ?string
+    {
+        return $this->validateur;
+    }
+
+    public function setValidateur(?string $validateur): static
+    {
+        $this->validateur = $validateur;
+
+        return $this;
+    }
+
+    public function getAlternant(): ?Alternant
+    {
+        return $this->alternant;
+    }
+
+    public function setAlternant(?Alternant $alternant): static
+    {
+        $this->alternant = $alternant;
 
         return $this;
     }

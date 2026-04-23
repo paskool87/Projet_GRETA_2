@@ -2,7 +2,12 @@
 
 namespace App\Controller;
 
-use App\Entity\Commentaire;;
+use App\Entity\Commentaire;
+use App\Entity\Fiche;
+use App\Entity\SuiviPedagogique;
+use App\Entity\Tutorat;
+use App\Entity\Utilisateur;
+use App\Enum\Role;;
 
 use App\Repository\CommentaireRepository;
 use DateTime;
@@ -12,22 +17,26 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('api/commentaire')]
-#[IsGranted('ROLE_ADMIN')]
+#[IsGranted('ROLE_USER')]
+
 final class CommentaireController extends AbstractController
 {
 
     public function __construct(
-        private SerializerInterface $serializer,
         private ValidatorInterface $validator
     ) {}
 
+    //A faire plus tard , pas d'importance pour l'instant
+    #[IsGranted('ROLE_ADMIN')]
     #[Route(name: 'app_commentaire_index', methods: ['GET'])]
     public function index(
         CommentaireRepository $commentaireRepository,
@@ -36,107 +45,129 @@ final class CommentaireController extends AbstractController
         $commentaires = $commentaireRepository->findAll();
 
         return $this->json($commentaires, Response::HTTP_OK, [], [
-            'groups' => ['admin'],
+            'groups' => ['user:read'],
         ]);
     }
 
+    //A faire plus tard , pas d'importance pour l'instant
+    #[IsGranted('ROLE_ADMIN')]
     #[Route('/{id}', name: 'app_commentaire_show', methods: ['GET'])]
     public function show(?Commentaire $commentaire): JsonResponse
     {
         // Si l'commentaire n'est pas trouvé
-        if (null === $commentaire) {
-            return $this->json(["erreur" => "Commentaire non trouve"], Response::HTTP_NOT_FOUND);
+        if (!$commentaire) {
+            throw $this->createNotFoundException('Commentaire non trouvé');
         }
 
         return $this->json($commentaire, 200, [], [
-            'groups' => ['admin'],
+            'groups' => ['user:read'],
         ]);
     }
 
+
     #[Route('', name: 'app_commentaire_new', methods: ['POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): JsonResponse
+    public function new(Request $request, EntityManagerInterface $em, #[CurrentUser] Utilisateur $utilisateur): JsonResponse
     {
-        try {
-            //On decode les données de la requete en se basant sur le modelle de l'entité "Commentaire" et en creé une variable
-            $commentaire = $this->serializer->deserialize(
-                $request->getContent(), // body JSON
-                Commentaire::class,
-                'json'
-            );
-
-            $commentaire->setDateCreation(new DateTime("now"));
-
-            //On verifie si l'commentaire est valde par rapport aux contraintes que l'on appliqué dans config/validator/validator.yaml
-            $errors = $this->validator->validate($commentaire);
-            if (count($errors) > 0) {
-                return $this->json($errors, Response::HTTP_BAD_REQUEST);
-            }
-
-            // On enregistre l'commentaire en base de données
-            $entityManager->persist($commentaire);
-            $entityManager->flush();
-
-            return $this->json($commentaire, Response::HTTP_OK, [],  [
-                'groups' => ['admin'],
-            ]);
-        } catch (Exception $e) {
-            return $this->json(["erreur" => $e->getMessage()], 500);
+        //Seuls les professeur et tuteur peuvent mettre des commentaires
+        if (!$this->isGranted('ROLE_PROFESSEUR') && !$this->isGranted('ROLE_TUTEUR')) {
+            throw $this->createAccessDeniedException();
         }
+
+        //On decode les données de la requete 
+        $data = json_decode($request->getContent(), true);
+        $fiche_id = $data['fiche_id'] ?? null;
+        $commentaire_s = $data['commentaire'] ?? null;
+
+        if (!$fiche_id || !$commentaire_s) {
+            throw new BadRequestHttpException("Données manquantes (fiche_id ou commentaire)");
+        }
+
+        //On verifie la fiche et les droits de permission sur la fiche 
+        $fiche = $em->getRepository(Fiche::class)->find($fiche_id);
+        if (!$fiche) throw new BadRequestHttpException("La fiche spécifiée n'existe pas");
+
+        if ($this->isGranted('EDIT', $fiche)) {
+            throw $this->createAccessDeniedException();
+        }
+
+        // On crée un commentaire
+        $commentaire = new Commentaire();
+        $commentaire->setCommentaire($commentaire_s);
+        $commentaire->setFiche($fiche);
+        $commentaire->setAuteur($utilisateur);
+
+        //On verifie le commentaire 
+        $errors = $this->validator->validate($commentaire);
+        if (count($errors) > 0) {
+            return $this->json($errors, Response::HTTP_BAD_REQUEST);
+        }
+        //On enregistre le commentaire en base de données
+        $em->persist($commentaire);
+        $em->flush();
+
+        return $this->json($commentaire, Response::HTTP_CREATED, [],  [
+            'groups' => ['user:read'],
+        ]);
     }
 
 
 
     #[Route('/{id}/edit', name: 'app_commentaire_edit', methods: ['PUT'])]
-    public function edit(Request $request, ?Commentaire $commentaire, EntityManagerInterface $entityManager): JsonResponse
+    public function edit(Request $request, ?Commentaire $commentaire, EntityManagerInterface $entityManager, #[CurrentUser] Utilisateur $utilisateur): JsonResponse
     {
-        try {
-            // Si l'commentaire n'est pas trouvé
-            if (null === $commentaire) {
-                return $this->json(["erreur" => "Commentaire non trouve"], Response::HTTP_NOT_FOUND);
-            }
-
-            //On decode les données de la requete en se basant sur le modelle de l'entité "Commentaire" et on modifie l'commentaire 
-            $this->serializer->deserialize(
-                $request->getContent(), // body JSON
-                Commentaire::class,
-                'json',
-                [AbstractNormalizer::OBJECT_TO_POPULATE => $commentaire]
-            );
-
-            //On verifie si l'commentaire est valide par rapport aux contraintes que l'on appliqué dans config/validator/validator.yaml
-            $errors = $this->validator->validate($commentaire);
-            if (count($errors) > 0) {
-                return $this->json($errors, Response::HTTP_BAD_REQUEST);
-            }
-
-            //On enregistre l'commentaire modifié
-            $entityManager->persist($commentaire);
-            $entityManager->flush();
-
-            return $this->json($commentaire, Response::HTTP_OK, [], [
-                'groups' => ['admin'],
-            ]);
-        } catch (Exception $e) {
-            return $this->json(["erreur" => $e->getMessage()], 500);
+        // Verification du commentaire
+        if (null === $commentaire) {
+            throw $this->createNotFoundException();
         }
+
+        // Seul l'auteur ou une personne ayant le rôle ADMIN peut modifier
+        if ($commentaire->getAuteur() !== $utilisateur && !$this->isGranted('ROLE_ADMIN')) {
+            throw $this->createAccessDeniedException("Vous n'avez pas le droit de modifier ce commentaire.");
+        }
+
+        //On decode les données de la requete  
+        $data = json_decode($request->getContent(), true);
+        $commentaire_s = $data['commentaire'] ?? null;
+
+        if (!$commentaire_s) {
+            throw new BadRequestHttpException("Données manquantes (commentaire)");
+        }
+
+        $commentaire->setCommentaire($commentaire_s);
+
+        //On verifie le commentaire 
+        $errors = $this->validator->validate($commentaire);
+        if (count($errors) > 0) {
+            return $this->json($errors, Response::HTTP_BAD_REQUEST);
+        }
+
+        //On enregistre le commentaire modifié
+        $entityManager->persist($commentaire);
+        $entityManager->flush();
+
+        return $this->json($commentaire, Response::HTTP_OK, [], [
+            'groups' => ['user:read'],
+        ]);
     }
 
+
     #[Route('/{id}', name: 'app_commentaire_delete', methods: ['DELETE'])]
-    public function delete(?Commentaire $commentaire, EntityManagerInterface $entityManager): JsonResponse
+    public function delete(#[CurrentUser] $utilisateur, ?Commentaire $commentaire, EntityManagerInterface $entityManager): JsonResponse
     {
-        try {
-            // Si l'commentaire n'est pas trouvé
-            if (null === $commentaire) {
-                return $this->json(["erreur" => "Commentaire non trouve"], Response::HTTP_NOT_FOUND);
-            }
-
-            // On supprime l'commentaire en base de données
-            $entityManager->remove($commentaire);
-            $entityManager->flush();
-
-            return $this->json(["message" => "Commentaire suprime"], Response::HTTP_ACCEPTED);
-        } catch (Exception $e) {
-            return $this->json(["erreur" => $e->getMessage()], 500);
+        // Verification de l'existance du commentaire
+        if (null === $commentaire) {
+            return $this->json(["erreur" => "Commentaire non trouve"], Response::HTTP_NOT_FOUND);
         }
+
+        // Seul l'auteur ou une personne ayant le rôle ADMIN peut modifier
+        if ($commentaire->getAuteur() !== $utilisateur && !$this->isGranted('ROLE_ADMIN')) {
+            throw $this->createAccessDeniedException("Vous n'avez pas le droit de modifier ce commentaire.");
+        }
+
+        // On supprime le commentaire en base de données
+        $entityManager->remove($commentaire);
+        $entityManager->flush();
+
+        return $this->json(["message" => "Commentaire supprimée"], Response::HTTP_ACCEPTED);
     }
 }

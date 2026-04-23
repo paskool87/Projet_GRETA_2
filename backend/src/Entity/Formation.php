@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\FormationRepository;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\DBAL\Types\Types;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -14,33 +15,39 @@ class Formation
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
-    #[Groups(['admin'])]
+    #[ORM\Column(length: 45)]
+    #[Groups(['user:read'])]
     private ?string $nom_formation = null;
 
 
-    #[ORM\Column(length: 255)]
-    #[Groups(['admin'])]
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['user:read'])]
     private ?string $description = null;
 
-    #[ORM\Column(length: 20, nullable: true)]
-    #[Groups(['admin'])]
+    #[ORM\Column(length: 20)]
+    #[Groups(['user:read'])]
     private ?string $session = null;
 
     /**
      * @var Collection<int, SuiviPedagogique>
      */
-    #[ORM\OneToMany(targetEntity: SuiviPedagogique::class, mappedBy: 'formation_id')]
+    #[ORM\OneToMany(targetEntity: SuiviPedagogique::class, mappedBy: 'formation')]
     private Collection $suiviPedagogiques;
 
     /**
      * @var Collection<int, Alternant>
      */
-    #[ORM\OneToMany(targetEntity: Alternant::class, mappedBy: 'formation_id')]
+    #[ORM\OneToMany(targetEntity: Alternant::class, mappedBy: 'formation')]
     private Collection $alternants;
+
+    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    private ?\DateTime $date_debut = null;
+
+    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    private ?\DateTime $date_fin = null;
 
     public function __construct()
     {
@@ -77,7 +84,7 @@ class Formation
         return $this->description;
     }
 
-    public function setDescription(string $description): static
+    public function setDescription(?string $description): static
     {
         $this->description = $description;
 
@@ -96,7 +103,7 @@ class Formation
     {
         if (!$this->suiviPedagogiques->contains($suiviPedagogique)) {
             $this->suiviPedagogiques->add($suiviPedagogique);
-            $suiviPedagogique->setFormationId($this);
+            $suiviPedagogique->setFormation($this);
         }
 
         return $this;
@@ -106,8 +113,8 @@ class Formation
     {
         if ($this->suiviPedagogiques->removeElement($suiviPedagogique)) {
             // set the owning side to null (unless already changed)
-            if ($suiviPedagogique->getFormationId() === $this) {
-                $suiviPedagogique->setFormationId(null);
+            if ($suiviPedagogique->getFormation() === $this) {
+                $suiviPedagogique->setFormation(null);
             }
         }
 
@@ -119,7 +126,7 @@ class Formation
         return $this->session;
     }
 
-    public function setSession(?string $session): static
+    public function setSession(string $session): static
     {
         $this->session = $session;
 
@@ -138,7 +145,7 @@ class Formation
     {
         if (!$this->alternants->contains($alternant)) {
             $this->alternants->add($alternant);
-            $alternant->setFormationId($this);
+            $alternant->setFormation($this);
         }
 
         return $this;
@@ -148,10 +155,34 @@ class Formation
     {
         if ($this->alternants->removeElement($alternant)) {
             // set the owning side to null (unless already changed)
-            if ($alternant->getFormationId() === $this) {
-                $alternant->setFormationId(null);
+            if ($alternant->getFormation() === $this) {
+                $alternant->setFormation(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getDateDebut(): ?\DateTime
+    {
+        return $this->date_debut;
+    }
+
+    public function setDateDebut(\DateTime $date_debut): static
+    {
+        $this->date_debut = $date_debut;
+
+        return $this;
+    }
+
+    public function getDateFin(): ?\DateTime
+    {
+        return $this->date_fin;
+    }
+
+    public function setDateFin(\DateTime $date_fin): static
+    {
+        $this->date_fin = $date_fin;
 
         return $this;
     }

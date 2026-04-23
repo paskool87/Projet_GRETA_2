@@ -17,21 +17,18 @@ class Tutorat
 
     #[ORM\ManyToOne(inversedBy: 'tutorats')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Utilisateur $tuteur_id = null;
+    private ?Utilisateur $tuteur = null;
 
     #[ORM\ManyToOne(inversedBy: 'tutorats')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Alternant $alternant_id = null;
+    private ?Alternant $alternant = null;
 
     #[ORM\Column]
-    #[Groups(['admin'])]
     private ?bool $actif = null;
 
-    #[Groups(['admin'])]
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTime $date_debut = null;
 
-    #[Groups(['admin'])]
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTime $date_fin = null;
 
@@ -47,29 +44,6 @@ class Tutorat
         return $this;
     }
 
-    public function getTuteurId(): ?Utilisateur
-    {
-        return $this->tuteur_id;
-    }
-
-    public function setTuteurId(?Utilisateur $tuteur_id): static
-    {
-        $this->tuteur_id = $tuteur_id;
-
-        return $this;
-    }
-
-    public function getAlternantId(): ?Alternant
-    {
-        return $this->alternant_id;
-    }
-
-    public function setAlternantId(?Alternant $alternant_id): static
-    {
-        $this->alternant_id = $alternant_id;
-
-        return $this;
-    }
 
     public function isActif(): ?bool
     {
@@ -103,6 +77,30 @@ class Tutorat
     public function setDateFin(?\DateTime $date_fin): static
     {
         $this->date_fin = $date_fin;
+
+        return $this;
+    }
+
+    public function getTuteur(): ?Utilisateur
+    {
+        return $this->tuteur;
+    }
+
+    public function setTuteur(?Utilisateur $tuteur): static
+    {
+        $this->tuteur = $tuteur;
+
+        return $this;
+    }
+
+    public function getAlternant(): ?Alternant
+    {
+        return $this->alternant;
+    }
+
+    public function setAlternant(?Alternant $alternant): static
+    {
+        $this->alternant = $alternant;
 
         return $this;
     }

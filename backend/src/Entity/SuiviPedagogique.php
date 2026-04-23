@@ -16,13 +16,13 @@ class SuiviPedagogique
 
     #[ORM\ManyToOne(inversedBy: 'suiviPedagogiques')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Alternant $alternant_id = null;
+    private ?Alternant $alternant = null;
 
     #[ORM\ManyToOne(inversedBy: 'suiviPedagogiques')]
     private ?Utilisateur $professeur = null;
 
     #[ORM\ManyToOne(inversedBy: 'suiviPedagogiques')]
-    private ?Formation $formation_id = null;
+    private ?Formation $formation = null;
 
     #[ORM\Column]
     private ?bool $est_principal = null;
@@ -48,17 +48,6 @@ class SuiviPedagogique
         return $this;
     }
 
-    public function getAlternantId(): ?Alternant
-    {
-        return $this->alternant_id;
-    }
-
-    public function setAlternantId(?Alternant $alternant_id): static
-    {
-        $this->alternant_id = $alternant_id;
-
-        return $this;
-    }
 
     public function getProfesseur(): ?Utilisateur
     {
@@ -68,18 +57,6 @@ class SuiviPedagogique
     public function setProfesseur(?Utilisateur $professeur): static
     {
         $this->professeur = $professeur;
-
-        return $this;
-    }
-
-    public function getFormationId(): ?Formation
-    {
-        return $this->formation_id;
-    }
-
-    public function setFormationId(?Formation $formation_id): static
-    {
-        $this->formation_id = $formation_id;
 
         return $this;
     }
@@ -128,6 +105,30 @@ class SuiviPedagogique
     public function setActif(bool $actif): static
     {
         $this->actif = $actif;
+
+        return $this;
+    }
+
+    public function getAlternant(): ?Alternant
+    {
+        return $this->alternant;
+    }
+
+    public function setAlternant(?Alternant $alternant): static
+    {
+        $this->alternant = $alternant;
+
+        return $this;
+    }
+
+    public function getFormation(): ?Formation
+    {
+        return $this->formation;
+    }
+
+    public function setFormation(?Formation $formation): static
+    {
+        $this->formation = $formation;
 
         return $this;
     }

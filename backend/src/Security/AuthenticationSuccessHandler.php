@@ -27,9 +27,10 @@ class AuthenticationSuccessHandler implements EventSubscriberInterface
         $data['message'] = 'Connexion réussie !';
         $data['user'] = [
             'email' => $user->getUserIdentifier(),
-            'roles' => $user->getRoles(),
+            'roles' => $user->getRole(),
             'nom' => $user->getNom(),
             'prenom' => $user->getPrenom(),
+            'id_utilisateur' => $user->getId(),
         ];
 
         $event->setData($data);

@@ -2,8 +2,8 @@
 
 namespace App\Entity;
 
-use App\Enum\Jour;
 use App\Repository\TacheRepository;
+use DateTime;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -15,45 +15,46 @@ class Tache
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['admin'])]
+    #[Groups(['user:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'taches')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Fiche $fiche_id = null;
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Fiche $fiche = null;
 
 
     #[ORM\Column(length: 250)]
-    #[Groups(['admin'])]
-    private ?string $tache_acomplie = null;
+    #[Groups(['user:read'])]
+    private ?string $description = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Groups(['admin'])]
-    private ?\DateTime $date_tache = null;
+    #[Groups(['user:read'])]
+    private ?DateTime $date_tache = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['admin'])]
     private ?bool $autonomie = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['admin'])]
     private ?bool $observation = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['admin'])]
     private ?bool $surveille = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['admin'])]
     private ?bool $absence = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['admin'])]
     private ?bool $ferie = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
-    #[Groups(['admin'])]
-    private ?\DateTime $date_creation = null;
+    #[Groups(['user:read'])]
+    private ?DateTime $date_creation = null;
+
+    public function __construct()
+    {
+        $this->date_creation = new DateTime('now');
+    }
+
 
     public function getId(): ?int
     {
@@ -67,25 +68,13 @@ class Tache
         return $this;
     }
 
-    public function getFicheId(): ?Fiche
-    {
-        return $this->fiche_id;
-    }
 
-    public function setFicheId(?Fiche $fiche_id): static
-    {
-        $this->fiche_id = $fiche_id;
-
-        return $this;
-    }
-
-
-    public function getDateTache(): ?\DateTime
+    public function getDateTache(): ?DateTime
     {
         return $this->date_tache;
     }
 
-    public function setDateTache(\DateTime $date_tache): static
+    public function setDateTache(DateTime $date_tache): static
     {
         $this->date_tache = $date_tache;
 
@@ -109,7 +98,7 @@ class Tache
         return $this->observation;
     }
 
-    public function setObservation(bool $observation): static
+    public function setObservation(?bool $observation): static
     {
         $this->observation = $observation;
 
@@ -121,7 +110,7 @@ class Tache
         return $this->surveille;
     }
 
-    public function setSurveille(bool $surveille): static
+    public function setSurveille(?bool $surveille): static
     {
         $this->surveille = $surveille;
 
@@ -133,7 +122,7 @@ class Tache
         return $this->absence;
     }
 
-    public function setAbsence(bool $absence): static
+    public function setAbsence(?bool $absence): static
     {
         $this->absence = $absence;
 
@@ -145,33 +134,80 @@ class Tache
         return $this->ferie;
     }
 
-    public function setFerie(bool $ferie): static
+    public function setFerie(?bool $ferie): static
     {
         $this->ferie = $ferie;
 
         return $this;
     }
 
-    public function getDateCreation(): ?\DateTime
+    public function getDateCreation(): ?DateTime
     {
         return $this->date_creation;
     }
 
-    public function setDateCreation(\DateTime $date_creation): static
+    public function setDateCreation(?DateTime $date_creation): static
     {
         $this->date_creation = $date_creation;
 
         return $this;
     }
 
-    public function getTacheAcomplie(): ?string
+    #[Groups(['user:read'])]
+    public function getCategorie(): ?string
     {
-        return $this->tache_acomplie;
+        $m = "pas de status";
+        if ($this->autonomie) {
+            $m = "autonomie";
+        } elseif ($this->surveille) {
+            $m = "surveille";
+        } elseif ($this->observation) {
+            $m = "observation";
+        } elseif ($this->ferie) {
+            $m = "ferie";
+        } elseif ($this->absence) {
+            $m = "absence";
+        }
+        return $m;
     }
 
-    public function setTacheAcomplie(string $tache_acomplie): static
+    public function setCategorie(string $catNom): void
     {
-        $this->tache_acomplie = $tache_acomplie;
+        $this->autonomie = false;
+        $this->surveille = false;
+        $this->observation = false;
+        $this->ferie = false;
+        $this->absence = false;
+        match (strtolower($catNom)) {
+            "autonomie" => $this->setAutonomie(true),
+            "surveille" => $this->setSurveille(true),
+            "observation" => $this->setObservation(true),
+            "ferie" => $this->setFerie(true),
+            "absence" => $this->setAbsence(true),
+            default => null
+        };
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(string $description): static
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    public function getFiche(): ?Fiche
+    {
+        return $this->fiche;
+    }
+
+    public function setFiche(?Fiche $fiche): static
+    {
+        $this->fiche = $fiche;
 
         return $this;
     }
