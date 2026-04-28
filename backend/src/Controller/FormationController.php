@@ -2,12 +2,9 @@
 
 namespace App\Controller;
 
-use App\Entity\Formation;;
-
+use App\Entity\Formation;
 use App\Repository\FormationRepository;
-use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
-use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,17 +19,16 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 #[IsGranted('ROLE_ADMIN')]
 final class FormationController extends AbstractController
 {
-
     public function __construct(
         private SerializerInterface $serializer,
-        private ValidatorInterface $validator
-    ) {}
+        private ValidatorInterface $validator,
+    ) {
+    }
 
     #[Route(name: 'app_formation_index', methods: ['GET'])]
     public function index(
         FormationRepository $formationRepository,
     ): JsonResponse {
-
         $formations = $formationRepository->findAll();
 
         return $this->json($formations, Response::HTTP_OK, [], [
@@ -45,7 +41,7 @@ final class FormationController extends AbstractController
     {
         // Si l'formation n'est pas trouvé
         if (null === $formation) {
-            return $this->json(["erreur" => "Formation non trouve"], Response::HTTP_NOT_FOUND);
+            return $this->json(['erreur' => 'Formation non trouve'], Response::HTTP_NOT_FOUND);
         }
 
         return $this->json($formation, 200, [], [
@@ -57,16 +53,16 @@ final class FormationController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         try {
-            //On decode les données de la requete en se basant sur le modelle de l'entité "Formation" et en creé une variable
+            // On decode les données de la requete en se basant sur le modelle de l'entité "Formation" et en creé une variable
             $formation = $this->serializer->deserialize(
                 $request->getContent(), // body JSON
                 Formation::class,
                 'json'
             );
 
-            $formation->setDateCreation(new DateTime("now"));
+            $formation->setDateCreation(new \DateTime('now'));
 
-            //On verifie si l'formation est valde par rapport aux contraintes que l'on appliqué dans config/validator/validator.yaml
+            // On verifie si l'formation est valde par rapport aux contraintes que l'on appliqué dans config/validator/validator.yaml
             $errors = $this->validator->validate($formation);
             if (count($errors) > 0) {
                 return $this->json($errors, Response::HTTP_BAD_REQUEST);
@@ -76,15 +72,13 @@ final class FormationController extends AbstractController
             $entityManager->persist($formation);
             $entityManager->flush();
 
-            return $this->json($formation, Response::HTTP_OK, [],  [
+            return $this->json($formation, Response::HTTP_OK, [], [
                 'groups' => ['admin'],
             ]);
-        } catch (Exception $e) {
-            return $this->json(["erreur" => $e->getMessage()], 500);
+        } catch (\Exception $e) {
+            return $this->json(['erreur' => $e->getMessage()], 500);
         }
     }
-
-
 
     #[Route('/{id}/edit', name: 'app_formation_edit', methods: ['PUT'])]
     public function edit(Request $request, ?Formation $formation, EntityManagerInterface $entityManager): JsonResponse
@@ -92,10 +86,10 @@ final class FormationController extends AbstractController
         try {
             // Si l'formation n'est pas trouvé
             if (null === $formation) {
-                return $this->json(["erreur" => "Formation non trouve"], Response::HTTP_NOT_FOUND);
+                return $this->json(['erreur' => 'Formation non trouve'], Response::HTTP_NOT_FOUND);
             }
 
-            //On decode les données de la requete en se basant sur le modelle de l'entité "Formation" et on modifie l'formation 
+            // On decode les données de la requete en se basant sur le modelle de l'entité "Formation" et on modifie l'formation
             $this->serializer->deserialize(
                 $request->getContent(), // body JSON
                 Formation::class,
@@ -103,21 +97,21 @@ final class FormationController extends AbstractController
                 [AbstractNormalizer::OBJECT_TO_POPULATE => $formation]
             );
 
-            //On verifie si l'formation est valide par rapport aux contraintes que l'on appliqué dans config/validator/validator.yaml
+            // On verifie si l'formation est valide par rapport aux contraintes que l'on appliqué dans config/validator/validator.yaml
             $errors = $this->validator->validate($formation);
             if (count($errors) > 0) {
                 return $this->json($errors, Response::HTTP_BAD_REQUEST);
             }
 
-            //On enregistre l'formation modifié
+            // On enregistre l'formation modifié
             $entityManager->persist($formation);
             $entityManager->flush();
 
             return $this->json($formation, Response::HTTP_OK, [], [
                 'groups' => ['admin'],
             ]);
-        } catch (Exception $e) {
-            return $this->json(["erreur" => $e->getMessage()], 500);
+        } catch (\Exception $e) {
+            return $this->json(['erreur' => $e->getMessage()], 500);
         }
     }
 
@@ -127,16 +121,16 @@ final class FormationController extends AbstractController
         try {
             // Si l'formation n'est pas trouvé
             if (null === $formation) {
-                return $this->json(["erreur" => "Formation non trouve"], Response::HTTP_NOT_FOUND);
+                return $this->json(['erreur' => 'Formation non trouve'], Response::HTTP_NOT_FOUND);
             }
 
             // On supprime l'formation en base de données
             $entityManager->remove($formation);
             $entityManager->flush();
 
-            return $this->json(["message" => "Formation suprime"], Response::HTTP_ACCEPTED);
-        } catch (Exception $e) {
-            return $this->json(["erreur" => $e->getMessage()], 500);
+            return $this->json(['message' => 'Formation suprime'], Response::HTTP_ACCEPTED);
+        } catch (\Exception $e) {
+            return $this->json(['erreur' => $e->getMessage()], 500);
         }
     }
 }

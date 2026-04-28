@@ -4,10 +4,10 @@ namespace App\Entity;
 
 use App\Repository\FormationRepository;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\DBAL\Types\Types;
-use Symfony\Component\Serializer\Attribute\Groups;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: FormationRepository::class)]
 class Formation
@@ -21,7 +21,6 @@ class Formation
     #[ORM\Column(length: 45)]
     #[Groups(['user:read'])]
     private ?string $nom_formation = null;
-
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['user:read'])]

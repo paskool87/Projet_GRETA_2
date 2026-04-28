@@ -1,5 +1,7 @@
 <?php
-# src/Serializer/MyCustomProblemNormalizer.php
+
+// src/Serializer/MyCustomProblemNormalizer.php
+
 namespace App\Serializer;
 
 use Symfony\Component\ErrorHandler\Exception\FlattenException;
@@ -23,7 +25,7 @@ class MyCustomProblemNormalizer implements NormalizerInterface
         return $data instanceof FlattenException;
     }
 
-    public function getSupportedTypes(string|null $format): array
+    public function getSupportedTypes(?string $format): array
     {
         return [];
     }

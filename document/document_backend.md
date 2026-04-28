@@ -1,4 +1,4 @@
-# Documentation Backend
+# Documentation Backend pour windows
 
 ## Démarrage du backend
 
@@ -8,7 +8,38 @@
 - Accès à la racine du projet backend
 - Un terminal ou Docker Desktop
 
-### 1. Créer le réseau Docker local (optionnel)
+## Instructions de démarrage
+
+### 0. Lancer l'application Docker desktop
+
+### Ouvrir le projet dans  Visual Studio Code
+
+### 1. Ouvrir un terminal intégré dans Visual Studio Code
+
+Cliquez sur `Terminal` > `New Terminal` dans la barre de menu.
+Ou utilisez le raccourci clavier `Ctrl + ù` pour ouvrir un nouveau terminal intégré.
+
+### 1. Dupliquer le fichier d'environnement Docker et le renommer en `.env`
+
+Sur Windows, vous pouvez utiliser la commande suivante :
+
+```bash
+COPY "docker\.env.example" "docker\.env"
+```
+
+Sur Linux ou MacOS, utilisez :
+
+```bash
+cp docker/.env.example docker/.env
+```
+
+### (OPTIONNEL) Créer le réseau Docker local
+
+Pour vérifier que le réseau si n'existe pas déjà :
+
+```bash
+docker network ls
+```
 
 ```bash
 docker network create local
@@ -22,22 +53,22 @@ docker compose up -d
 
 ### 3. Accéder au conteneur backend
 
-#### Depuis un terminal
-
-```bash
-docker exec -it backend-symfony-parc-attraction bash
-```
-
-#### Depuis Docker Desktop
+Depuis Docker Desktop
 
 - Ouvrir l'onglet **Containers**
 - Cliquer sur `backend-symfony-parc-attraction`
 - Aller dans l'onglet **Exec**
 - Taper `bash`
 
+Depuis un terminal
+
+```bash
+docker exec -it backend-symfony-parc-attraction bash
+```
+
 ### 4. Installer et préparer le backend
 
-Dans le conteneur backend :
+Dans le terminal :
 
 ```bash
 composer install
@@ -48,6 +79,8 @@ php bin/console doctrine:fixture:load
 
 ### 5. Générer les clés JWT
 
+Dans le terminal :
+
 ```bash
 php bin/console lexik:jwt:generate-keypair
 ```
@@ -55,12 +88,11 @@ php bin/console lexik:jwt:generate-keypair
 ### 6. Configurer les variables d'environnement
 
 Créer un fichier `.env.local` à la racine du projet backend et ajouter :
+Ecriver a la place de `your_passphrase_here` une suite de caractères aléatoires pour sécuriser les tokens JWT.
 
 ```env
 JWT_PASSPHRASE=your_passphrase_here
 ```
-
-> Si vous utilisez Docker, vérifiez également le fichier `docker/.env` ou `docker/.env.example` pour les variables liées aux ports.
 
 ### 7. Accéder à l'API backend
 

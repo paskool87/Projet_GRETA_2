@@ -2,10 +2,10 @@
 
 namespace App\Security\Voter;
 
-use App\Entity\Utilisateur;
 use App\Entity\Fiche;
 use App\Entity\SuiviPedagogique;
 use App\Entity\Tutorat;
+use App\Entity\Utilisateur;
 use App\Enum\Role;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
@@ -19,7 +19,7 @@ final class FicheVoter extends Voter
     public const VIEW = 'VIEW';
 
     public function __construct(
-        private EntityManagerInterface $em
+        private EntityManagerInterface $em,
     ) {}
 
     protected function supports(string $attribute, mixed $subject): bool
@@ -46,10 +46,9 @@ final class FicheVoter extends Voter
         }
         $fiche = $subject;
 
-        if ($user->getRole() == Role::ADMINISTRATEUR->label()) {
+        if ($user->getRole() === Role::ADMINISTRATEUR->name) {
             return true;
         }
-
 
         switch ($attribute) {
             case self::EDIT:
@@ -62,36 +61,40 @@ final class FicheVoter extends Voter
 
         return false;
     }
+
     private function canView(Fiche $fiche, Utilisateur $user): bool
     {
-
         switch (Role::tryfrom($user->getRole())) {
             case Role::PROFESSEUR_REFERENT:
                 $fiche = $this->em->getRepository(SuiviPedagogique::class)->findFichebyProfesseurId($user->getId(), $fiche->getId());
-                return $fiche != null;
+
+                return null != $fiche;
                 break;
             case Role::TUTEUR:
                 $fiche = $this->em->getRepository(Tutorat::class)->findFichebyTuteurId($user->getId(), $fiche->getId());
-                return $fiche != null;
+
+                return null != $fiche;
                 break;
             case Role::ALTERNANT:
                 return $fiche->getAlternant()->getUtilisateur() === $user;
                 break;
         }
+
         return false;
     }
 
     private function canEdit(Fiche $fiche, Utilisateur $user): bool
     {
         if ($this->canView($fiche, $user)) {
-            if ($fiche->getValidateur() === 'entreprise' && $user->getRole() === Role::TUTEUR->name) {
+            if ('entreprise' === $fiche->getValidateur() && $user->getRole() === Role::TUTEUR->name) {
                 return true;
-            } else if ($fiche->getValidateur() === 'formation' && $user->getRole() === Role::PROFESSEUR_REFERENT->name) {
+            } elseif ('formation' === $fiche->getValidateur() && $user->getRole() === Role::PROFESSEUR_REFERENT->name) {
                 return true;
-            } else if ($user->getRole() === Role::ALTERNANT->name) {
+            } elseif ($user->getRole() === Role::ALTERNANT->name) {
                 return true;
             }
         }
+
         return false;
     }
 }

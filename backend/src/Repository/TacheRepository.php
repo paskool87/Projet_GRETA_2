@@ -42,17 +42,18 @@ class TacheRepository extends ServiceEntityRepository
     //    }
 
     /**
-     * Trouve une tache a la date indique
-     * @param \DateTimeInterface $date date de la recherche
-     * @param int $fiche_id Fiche 
+     * Trouve une tache a la date indique.
+     *
+     * @param \DateTimeInterface $date     date de la recherche
+     * @param int                $fiche_id Fiche
      */
     public function findOneTachebyDate(\DateTimeInterface $date, int $fiche_id): ?Tache
     {
-        return $this->createQueryBuilder("t")
-            ->andWhere("t.fiche = :fiche_id")
-            ->andWhere("t.date_tache = :date_tache")
-            ->setParameter("fiche_id", $fiche_id)
-            ->setParameter("date_tache", $date)
+        return $this->createQueryBuilder('t')
+            ->andWhere('t.fiche = :fiche_id')
+            ->andWhere('t.date_tache = :date_tache')
+            ->setParameter('fiche_id', $fiche_id)
+            ->setParameter('date_tache', $date)
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();

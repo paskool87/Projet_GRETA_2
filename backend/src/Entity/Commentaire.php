@@ -3,11 +3,9 @@
 namespace App\Entity;
 
 use App\Repository\CommentaireRepository;
-use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
-use Symfony\Component\Serializer\Attribute\Groups;
 use Doctrine\ORM\Mapping as ORM;
-use DateTime;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: CommentaireRepository::class)]
 class Commentaire
@@ -22,24 +20,22 @@ class Commentaire
     #[Groups(['user:read'])]
     private ?string $commentaire = null;
 
-
-
     #[ORM\ManyToOne(inversedBy: 'commentaires')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Fiche $fiche = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     #[Groups(['user:read'])]
-    private ?DateTime $date_creation = null;
+    private ?\DateTime $date_creation = null;
 
     #[ORM\ManyToOne(inversedBy: 'commentaires')]
     private ?Utilisateur $auteur = null;
 
-
     public function __construct()
     {
-        $this->date_creation = new DateTime("now");
+        $this->date_creation = new \DateTime('now');
     }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -64,14 +60,12 @@ class Commentaire
         return $this;
     }
 
-
-
-    public function getDateCreation(): ?DateTime
+    public function getDateCreation(): ?\DateTime
     {
         return $this->date_creation;
     }
 
-    public function setDateCreation(DateTime $date_creation): static
+    public function setDateCreation(\DateTime $date_creation): static
     {
         $this->date_creation = $date_creation;
 

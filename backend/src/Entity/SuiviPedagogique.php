@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\SuiviPedagogiqueRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: SuiviPedagogiqueRepository::class)]
 class SuiviPedagogique
@@ -19,6 +20,7 @@ class SuiviPedagogique
     private ?Alternant $alternant = null;
 
     #[ORM\ManyToOne(inversedBy: 'suiviPedagogiques')]
+    #[Groups(['sp:read'])]
     private ?Utilisateur $professeur = null;
 
     #[ORM\ManyToOne(inversedBy: 'suiviPedagogiques')]
@@ -47,7 +49,6 @@ class SuiviPedagogique
 
         return $this;
     }
-
 
     public function getProfesseur(): ?Utilisateur
     {

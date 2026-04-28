@@ -5,7 +5,6 @@ namespace App\Repository;
 use App\Entity\Alternant;
 use App\Entity\Tutorat;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\ORM\Query\Expr;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -47,7 +46,6 @@ class TutoratRepository extends ServiceEntityRepository
     {
         $entityManager = $this->getEntityManager();
 
-
         $query = $entityManager->createQuery(
             'SELECT f.id as fiche,a.id as alternant  FROM App\Entity\Fiche f
                 LEFT JOIN App\Entity\Alternant  a ON f.alternant=a.id
@@ -56,12 +54,11 @@ class TutoratRepository extends ServiceEntityRepository
         )->setParameter('tuteur_id', $tuteur_id)
             ->setParameter('fiche_id', $fiche_id);
 
-
         // returns an array of Product objects
         return $query->getResult();
     }
 
-    //SELECT * FROM app.alternant as a left join app.tutorat as t on t.alternant_id=a.id where t.tuteur_id=398;
+    // SELECT * FROM app.alternant as a left join app.tutorat as t on t.alternant_id=a.id where t.tuteur_id=398;
 
     public function findAlternantByTuteurId(int $tuteur_id, int $alternant_id): ?Tutorat
     {

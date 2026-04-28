@@ -4,18 +4,18 @@ namespace App\Enum;
 
 enum Role: string
 {
-    case ALTERNANT            = "ALTERNANT";
-    case TUTEUR              = "TUTEUR";
-    case PROFESSEUR_REFERENT = "PROFESSEUR_REFERENT";
-    case ADMINISTRATEUR      = "ADMINISTRATEUR";
+    case ALTERNANT = 'ALTERNANT';
+    case TUTEUR = 'TUTEUR';
+    case PROFESSEUR_REFERENT = 'PROFESSEUR_REFERENT';
+    case ADMINISTRATEUR = 'ADMINISTRATEUR';
 
     public function label(): string
     {
         return match ($this) {
-            self::ALTERNANT            => "Alternant",
-            self::TUTEUR              => "Tuteur",
-            self::PROFESSEUR_REFERENT => "Professeur Référent",
-            self::ADMINISTRATEUR      => "Administrateur",
+            self::ALTERNANT => 'Alternant',
+            self::TUTEUR => 'Tuteur',
+            self::PROFESSEUR_REFERENT => 'Professeur Référent',
+            self::ADMINISTRATEUR => 'Administrateur',
         };
     }
 }

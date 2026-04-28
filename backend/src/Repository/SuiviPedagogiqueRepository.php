@@ -2,7 +2,6 @@
 
 namespace App\Repository;
 
-use App\Entity\Alternant;
 use App\Entity\SuiviPedagogique;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -46,7 +45,6 @@ class SuiviPedagogiqueRepository extends ServiceEntityRepository
     {
         $entityManager = $this->getEntityManager();
 
-
         $query = $entityManager->createQuery(
             'SELECT f.id as fiche,a.id as alternant  FROM App\Entity\Fiche f
                 LEFT JOIN App\Entity\Alternant  a ON f.alternant=a.id
@@ -54,7 +52,6 @@ class SuiviPedagogiqueRepository extends ServiceEntityRepository
                 where  sp.professeur = :tuteur_id AND f.id = :fiche_id'
         )->setParameter('tuteur_id', $professeur_id)
             ->setParameter('fiche_id', $fiche_id);
-
 
         // returns an array of Product objects
         return $query->getResult();

@@ -5,10 +5,10 @@ namespace App\Entity;
 use App\Enum\StatusFiche;
 use App\Repository\FicheRepository;
 use Doctrine\Common\Collections\ArrayCollection;
-use Symfony\Component\Serializer\Attribute\Groups;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: FicheRepository::class)]
 class Fiche
@@ -22,7 +22,6 @@ class Fiche
     #[ORM\ManyToOne(inversedBy: 'fiches')]
     #[ORM\JoinColumn(nullable: true)]
     private ?Alternant $alternant = null;
-
 
     #[ORM\Column(nullable: true)]
     #[Groups(['user:read'])]
@@ -82,7 +81,6 @@ class Fiche
 
         return $this;
     }
-
 
     /**
      * @return Collection<int, Tache>

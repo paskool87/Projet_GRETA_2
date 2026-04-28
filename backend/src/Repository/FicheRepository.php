@@ -55,4 +55,17 @@ class FicheRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    // SELECT * FROM app.fiche where alternant_id=162 order by date_debut desc limit 1;
+
+    public function findDerniereFiche(Alternant $alternant): ?Fiche
+    {
+        return $this->createQueryBuilder('f')
+            ->andWhere('f.alternant = :alternant')
+            ->orderBy('f.date_debut', 'DESC')
+            ->setParameter('alternant', $alternant)
+            ->getQuery()
+            ->setMaxResults(1)
+            ->getOneOrNullResult();
+    }
 }

@@ -6,10 +6,10 @@ use App\Entity\Fiche;
 use App\Entity\Tache;
 use App\Repository\FicheRepository;
 use App\Repository\TacheRepository;
-use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,10 +23,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 #[IsGranted('ROLE_USER')]
 final class TacheController extends AbstractController
 {
-
     public function __construct(
         private SerializerInterface $serializer,
-        private ValidatorInterface $validator
+        private ValidatorInterface $validator,
     ) {}
 
     #[IsGranted('ROLE_ADMIN')]
@@ -34,15 +33,12 @@ final class TacheController extends AbstractController
     public function index(
         TacheRepository $tacheRepository,
     ): JsonResponse {
-
         $taches = $tacheRepository->findAll();
 
-
         return $this->json($taches, Response::HTTP_OK, [], [
-            'groups' => ['user', 'admin']
+            'groups' => ['user', 'admin'],
         ]);
     }
-
 
     #[IsGranted('ROLE_ADMIN')]
     #[Route('/{id}', name: 'app_tache_show', methods: ['GET'])]
@@ -50,7 +46,7 @@ final class TacheController extends AbstractController
     {
         // Si l'tache n'est pas trouvé
         if (null === $tache) {
-            return $this->json(["erreur" => "Tache non trouve"], Response::HTTP_NOT_FOUND);
+            return $this->json(['erreur' => 'Tache non trouve'], Response::HTTP_NOT_FOUND);
         }
 
         return $this->json($tache, 200, [], [
@@ -58,60 +54,59 @@ final class TacheController extends AbstractController
         ]);
     }
 
-    #[IsGranted('ROLE_ALTERNANT', 'ROLE_ADMIN')]
-    #[Route('', name: 'app_tache_new', methods: ['POST'])]
+    #[IsGranted('ROLE_ALTERNANT')]
+    #[Route('', name: 'app_tache_new', methods: ['POST', 'PUT'])]
     public function new(Request $request, EntityManagerInterface $entityManager, FicheRepository $ficheRepository): JsonResponse
     {
         try {
-            // 1.On decode les données de la requete 
+            // On decode les données de la requete
             $data = json_decode($request->getContent(), true);
             $fiche_id = $data['fiche_id'] ?? null;
             $taches = $data['taches'] ?? null;
 
             if (!$fiche_id || !$taches) {
-                return $this->json(['erreur' => 'Mauvais parametrages'], Response::HTTP_BAD_REQUEST);
+                throw new BadRequestException('Mauvais parametrages(fiche_id ou taches manquantes)');
             }
 
-            //2. On recupere la fiche et on verifie si on peut l'a modifier
+            //  On recupere la fiche et on verifie si on peut l'a modifier
             $fiche = $ficheRepository->find($fiche_id);
             if (!$fiche) {
-                return $this->json(['erreur' => 'Mauvais parametrages'], Response::HTTP_BAD_REQUEST);
+                throw new BadRequestException('Fiche non trouve');
             }
             if (!$this->isGranted('EDIT', $fiche)) {
                 throw $this->createAccessDeniedException();
-            };
+            }
 
-            //3. Creer les taches
+            // Creer ou modifier les taches
             foreach ($taches as $t) {
                 $description = $t['description'] ?? null;
                 $categorie = $t['categorie'] ?? null;
                 $date_tache = $t['date_tache'] ?? null;
 
                 if (!$description || !$categorie || !$date_tache) {
-                    return $this->json(['erreur' => 'Mauvais parametrages'], Response::HTTP_BAD_REQUEST);
+                    throw new BadRequestException('Mauvais parametrages');
                 }
 
-                //On verifie si la date de la tache est dans les espaces de la fiches
+                // On verifie si la date de la tache est dans les espaces de la fiches
                 $debutfiche = $fiche->getDateDebut()->format('Y-m-d');
                 $finfiche = $fiche->getDateFin()->format('Y-m-d');
 
                 // La tache est hors de la range de la fiche
                 if ($date_tache < $debutfiche || $date_tache > $finfiche) {
-                    return $this->json(['erreur' => 'Date hors de la plage de la fiche'], Response::HTTP_BAD_REQUEST);
+                    throw new BadRequestException('Date hors de la plage de la fiche');
                 }
 
-
                 // On creer la tache si elle n'existe pas ou on la modifie
-                $tache = $entityManager->getRepository(Tache::class)->findOneTachebyDate(new DateTime($date_tache), $fiche_id);
-                if ($tache === null) {
+                $tache = $entityManager->getRepository(Tache::class)->findOneTachebyDate(new \DateTime($date_tache), $fiche_id);
+                if (null === $tache) {
                     $tache = new Tache();
-                    $tache->setDateTache(new DateTime($date_tache));
+                    $tache->setDateTache(new \DateTime($date_tache));
                     $tache->setFiche($fiche);
                 }
                 $tache->setCategorie($categorie);
                 $tache->setDescription($description);
 
-                //On verifie si la tache est valide par rapport aux contraintes 
+                // On verifie si la tache est valide par rapport aux contraintes
                 $errors = $this->validator->validate($tache);
                 if (count($errors) > 0) {
                     return $this->json($errors, Response::HTTP_BAD_REQUEST);
@@ -120,16 +115,15 @@ final class TacheController extends AbstractController
                 $entityManager->persist($tache);
             }
             $entityManager->flush();
-            // On enregistre l'tache en base de données
+            // On enregistre la ou les taches en base de données
 
-            return $this->json($fiche->getTaches(), Response::HTTP_OK, [],  [
+            return $this->json($fiche->getTaches(), Response::HTTP_OK, [], [
                 'groups' => ['user:read'],
             ]);
-        } catch (Exception $e) {
-            return $this->json(["erreur" => $e->getMessage()], 500);
+        } catch (\Exception $e) {
+            return $this->json(['erreur' => $e->getMessage()], 500);
         }
     }
-
 
     /* Avoir avec mon mentor ou nicolas au niveau de la pertinance
     #[IsGranted('ROLE_ALTERNANT')]
@@ -142,7 +136,7 @@ final class TacheController extends AbstractController
                 return $this->json(["erreur" => "Tache non trouve"], Response::HTTP_NOT_FOUND);
             }
             $data = json_decode($request->getContent(), true);
-            //On decode les données de la requete en se basant sur le modelle de l'entité "Tache" et on modifie l'tache 
+            //On decode les données de la requete en se basant sur le modelle de l'entité "Tache" et on modifie l'tache
             $this->serializer->deserialize(
                 $request->getContent(), // body JSON
                 Tache::class,
@@ -181,16 +175,16 @@ final class TacheController extends AbstractController
         try {
             // Si l'tache n'est pas trouvé
             if (null === $tache) {
-                return $this->json(["erreur" => "Tache non trouve"], Response::HTTP_NOT_FOUND);
+                return $this->json(['erreur' => 'Tache non trouve'], Response::HTTP_NOT_FOUND);
             }
 
             // On supprime l'tache en base de données
             $entityManager->remove($tache);
             $entityManager->flush();
 
-            return $this->json(["message" => "Tache suprime"], Response::HTTP_ACCEPTED);
-        } catch (Exception $e) {
-            return $this->json(["erreur" => $e->getMessage()], 500);
+            return $this->json(['message' => 'Tache suprime'], Response::HTTP_ACCEPTED);
+        } catch (\Exception $e) {
+            return $this->json(['erreur' => $e->getMessage()], 500);
         }
     }
 }

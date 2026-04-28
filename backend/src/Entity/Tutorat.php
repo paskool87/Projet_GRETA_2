@@ -17,6 +17,7 @@ class Tutorat
 
     #[ORM\ManyToOne(inversedBy: 'tutorats')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['t:read'])]
     private ?Utilisateur $tuteur = null;
 
     #[ORM\ManyToOne(inversedBy: 'tutorats')]
@@ -43,7 +44,6 @@ class Tutorat
 
         return $this;
     }
-
 
     public function isActif(): ?bool
     {

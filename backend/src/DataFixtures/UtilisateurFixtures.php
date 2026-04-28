@@ -12,22 +12,22 @@ use App\Entity\Tutorat;
 use App\Entity\Utilisateur;
 use App\Enum\Role;
 use App\Enum\StatusFiche;
-use DateTime;
-use Faker;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
+use Faker;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UtilisateurFixtures extends Fixture
 {
     public function __construct(
-        private UserPasswordHasherInterface $passwordHasher
-    ) {}
+        private UserPasswordHasherInterface $passwordHasher,
+    ) {
+    }
 
     public function load(ObjectManager $manager): void
     {
-        $faker = Faker\Factory::create("fr_FR");
-        date_default_timezone_set("UTC");
+        $faker = Faker\Factory::create('fr_FR');
+        date_default_timezone_set('UTC');
 
         $alternants = [];
         $professeurs = [];
@@ -41,8 +41,8 @@ class UtilisateurFixtures extends Fixture
             $formation->setNomFormation($data['nom']) // Utilise le nom du preset
                 ->setDescription($data['descrription'])
                 ->setSession($data['session'])
-                ->setDateDebut(new DateTime($data['datedebut'])) // Utilise la date calculée
-                ->setDateFin(new DateTime($data['datefin']));
+                ->setDateDebut(new \DateTime($data['datedebut'])) // Utilise la date calculée
+                ->setDateFin(new \DateTime($data['datefin']));
 
             $manager->persist($formation);
 
@@ -57,7 +57,7 @@ class UtilisateurFixtures extends Fixture
             $professeurs[] = $professeur;
 
             // 3. Création de 10 alternants par formation
-            for ($a = 0; $a < 10; $a++) {
+            for ($a = 0; $a < 10; ++$a) {
                 $u_alternant = $this->creerUtilisateur(
                     Role::ALTERNANT->name, // Correction : Role Alternant ici
                     $faker->firstName(),
@@ -68,7 +68,7 @@ class UtilisateurFixtures extends Fixture
 
                 $alternant = new Alternant();
                 $alternant->setActif($u_alternant->isActif())
-                    ->setDateCreation(new DateTime("now"))
+                    ->setDateCreation(new \DateTime('now'))
                     ->setUtilisateur($u_alternant)
                     ->setFormation($formation);
                 $manager->persist($alternant);
@@ -112,8 +112,8 @@ class UtilisateurFixtures extends Fixture
         // 5. Création de l'administrateur
         $admin = $this->creerUtilisateur(
             Role::ADMINISTRATEUR->name,
-            "admin",
-            "admin",
+            'admin',
+            'admin',
             true
         );
         $manager->persist($admin);
@@ -125,16 +125,17 @@ class UtilisateurFixtures extends Fixture
     {
         $u = new Utilisateur();
         $u->setActif($actif)
-            ->setEmail(strtolower($nom . "." . $prenom) . "@gmail.com")
+            ->setEmail(strtolower($nom.'.'.$prenom).'@gmail.com')
             ->setNom($nom)
             ->setPrenom($prenom)
-            ->setMotDePasse($this->passwordHasher->hashPassword($u, "password123"))
+            ->setMotDePasse($this->passwordHasher->hashPassword($u, 'password123'))
             ->setRole($role)
-            ->setDateCreation(new DateTime("now"));
+            ->setDateCreation(new \DateTime('now'));
+
         return $u;
     }
 
-    private function creerFichesPourAlternant(Alternant $alternant, Formation $formation, Utilisateur $commentaireAuteur, ObjectManager $manager, \Faker\Generator $faker): void
+    private function creerFichesPourAlternant(Alternant $alternant, Formation $formation, Utilisateur $commentaireAuteur, ObjectManager $manager, Faker\Generator $faker): void
     {
         $statuses = [
             StatusFiche::VALIDE,
@@ -146,7 +147,7 @@ class UtilisateurFixtures extends Fixture
 
         $periodeDebut = (clone $formation->getDateDebut())->setTime(9, 0, 0);
 
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 5; ++$i) {
             $ficheDebut = (clone $periodeDebut)->modify("+$i week");
             if ($ficheDebut > $formation->getDateFin()) {
                 break;
@@ -158,25 +159,25 @@ class UtilisateurFixtures extends Fixture
             }
 
             $status = $statuses[$i];
-            $validateur = $i % 2 === 0 ? 'entreprise' : 'formation';
+            $validateur = 0 === $i % 2 ? 'entreprise' : 'formation';
             $fiche = new Fiche();
             $fiche->setAlternant($alternant)
                 ->setDateDebut($ficheDebut)
                 ->setDateFin($ficheFin)
-                ->setDateCreation(new DateTime('now'))
+                ->setDateCreation(new \DateTime('now'))
                 ->setStatusFiche($status)
                 ->setValidateur($validateur);
 
-            if ($status !== StatusFiche::BROUILLON) {
+            if (StatusFiche::BROUILLON !== $status) {
                 $fiche->setDateSoumission(clone $ficheFin);
             }
-            if ($status === StatusFiche::VALIDE || $status === StatusFiche::CRITERES_NON_REMPLIS) {
+            if (StatusFiche::VALIDE === $status || StatusFiche::CRITERES_NON_REMPLIS === $status) {
                 $fiche->setDateValidation(clone $ficheFin);
             }
 
             $manager->persist($fiche);
 
-            for ($j = 0; $j < 5; $j++) {
+            for ($j = 0; $j < 5; ++$j) {
                 $dateTache = (clone $ficheDebut)->modify("+$j day");
                 if ($dateTache > $ficheFin) {
                     $dateTache = clone $ficheFin;
@@ -186,7 +187,7 @@ class UtilisateurFixtures extends Fixture
                 $description = sprintf('Tâche %d pour la fiche %d de %s', $j + 1, $i + 1, $alternant->getUtilisateur()?->getPrenom() ?? 'alternant');
                 $tache->setDescription($description)
                     ->setDateTache($dateTache)
-                    ->setDateCreation(new DateTime('now'))
+                    ->setDateCreation(new \DateTime('now'))
                     ->setFiche($fiche);
 
                 $tache->setCategorie($faker->randomElement(['autonomie', 'surveille', 'observation', 'ferie', 'absence']));
@@ -195,10 +196,10 @@ class UtilisateurFixtures extends Fixture
                 $fiche->addTach($tache);
             }
 
-            if ($status === StatusFiche::CRITERES_NON_REMPLIS) {
+            if (StatusFiche::CRITERES_NON_REMPLIS === $status) {
                 $commentaire = new Commentaire();
                 $commentaire->setCommentaire('Une tâche est en critères non remplis, merci de vérifier les éléments manquants.')
-                    ->setDateCreation(new DateTime('now'))
+                    ->setDateCreation(new \DateTime('now'))
                     ->setAuteur($commentaireAuteur)
                     ->setFiche($fiche);
 
@@ -211,52 +212,53 @@ class UtilisateurFixtures extends Fixture
     private function genererFormationsAutomatique()
     {
         $config = [
-            "Formation DWWM" => 9,
-            "DUT"            => 24,
-            "BTS"            => 36
+            'Formation DWWM' => 9,
+            'DUT' => 24,
+            'BTS' => 36,
         ];
 
-        $aujourdhui = new DateTime('2026-04-01');
+        $aujourdhui = new \DateTime('2026-04-01');
 
-        $debutDWWM1 = (clone $aujourdhui)->modify("-4 months");
-        $debutDWWM2 = (clone $aujourdhui)->modify("-2 months");
-        $debutDUT1 = new DateTime("first Monday of September 2024");
-        $debutDUT2 = new DateTime("first Monday of September 2025");
-        $debutBTS  = new DateTime("first Monday of September 2024");
+        $debutDWWM1 = (clone $aujourdhui)->modify('-4 months');
+        $debutDWWM2 = (clone $aujourdhui)->modify('-2 months');
+        $debutDUT1 = new \DateTime('first Monday of September 2024');
+        $debutDUT2 = new \DateTime('first Monday of September 2025');
+        $debutBTS = new \DateTime('first Monday of September 2024');
 
         $entrees = [
-            ["nom" => "Formation DWWM", "session" => "session 1(9 mois)", "debut" => $debutDWWM1->format("Y-m-d")],
-            ["nom" => "Formation DWWM", "session" => "session 2(9 mois)", "debut" => $debutDWWM2->format("Y-m-d")],
-            ["nom" => "DUT", "session" => "2024/2026", "debut" => $debutDUT1->format("Y-m-d")],
-            ["nom" => "DUT", "session" => "2025/2027", "debut" => $debutDUT2->format("Y-m-d")],
-            ["nom" => "BTS", "session" => "2024/2027", "debut" => $debutBTS->format("Y-m-d")]
+            ['nom' => 'Formation DWWM', 'session' => 'session 1(9 mois)', 'debut' => $debutDWWM1->format('Y-m-d')],
+            ['nom' => 'Formation DWWM', 'session' => 'session 2(9 mois)', 'debut' => $debutDWWM2->format('Y-m-d')],
+            ['nom' => 'DUT', 'session' => '2024/2026', 'debut' => $debutDUT1->format('Y-m-d')],
+            ['nom' => 'DUT', 'session' => '2025/2027', 'debut' => $debutDUT2->format('Y-m-d')],
+            ['nom' => 'BTS', 'session' => '2024/2027', 'debut' => $debutBTS->format('Y-m-d')],
         ];
 
         $formations = [];
         foreach ($entrees as $item) {
             $nom = $item['nom'];
-            $dateDebut = new DateTime($item['debut'] . " 09:00:00");
+            $dateDebut = new \DateTime($item['debut'].' 09:00:00');
             $dateFin = clone $dateDebut;
 
             if (isset($config[$nom])) {
                 $dureeMois = $config[$nom];
                 $dateFin->modify("+$dureeMois months");
-                if ($nom === "DUT" || $nom === "BTS") {
-                    $dateFin->modify("last friday of June " . $dateFin->format('Y'));
+                if ('DUT' === $nom || 'BTS' === $nom) {
+                    $dateFin->modify('last friday of June '.$dateFin->format('Y'));
                 } else {
-                    $dateFin->modify("-3 days");
+                    $dateFin->modify('-3 days');
                 }
                 $dateFin->setTime(17, 0, 0);
             }
 
             $formations[] = [
-                "nom" => $nom,
-                "descrription" => "Cursus $nom - Session " . $item['session'],
-                "session" => $item['session'],
-                "datedebut" => $dateDebut->format('Y-m-d H:i:s'),
-                "datefin" => $dateFin->format('Y-m-d H:i:s')
+                'nom' => $nom,
+                'descrription' => "Cursus $nom - Session ".$item['session'],
+                'session' => $item['session'],
+                'datedebut' => $dateDebut->format('Y-m-d H:i:s'),
+                'datefin' => $dateFin->format('Y-m-d H:i:s'),
             ];
         }
+
         return $formations;
     }
 }

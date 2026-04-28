@@ -3,15 +3,24 @@
 namespace App\Security;
 
 use App\Entity\Utilisateur;
+use App\Repository\AlternantRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Mapping\Entity;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\AuthenticationSuccessEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class AuthenticationSuccessHandler implements EventSubscriberInterface
 {
+
+    private $repo;
+    public function __construct(AlternantRepository $repo)
+    {
+        $this->repo = $repo;
+    }
     public static function getSubscribedEvents(): array
     {
         return [
-            'lexik_jwt_authentication.on_authentication_success' => 'onSuccess'
+            'lexik_jwt_authentication.on_authentication_success' => 'onSuccess',
         ];
     }
 
@@ -32,6 +41,11 @@ class AuthenticationSuccessHandler implements EventSubscriberInterface
             'prenom' => $user->getPrenom(),
             'id_utilisateur' => $user->getId(),
         ];
+
+        //Si c'est un alternant, on ajoute son id d'alternant
+        if ($user->getRole() === 'ALTERNANT') {
+            $data['user']['id_alternant'] = $this->repo->findOneBy(['utilisateur' => $user])->getId();
+        }
 
         $event->setData($data);
     }

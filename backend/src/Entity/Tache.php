@@ -3,11 +3,9 @@
 namespace App\Entity;
 
 use App\Repository\TacheRepository;
-use DateTime;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
-
 
 #[ORM\Entity(repositoryClass: TacheRepository::class)]
 class Tache
@@ -22,14 +20,13 @@ class Tache
     #[ORM\JoinColumn(nullable: true)]
     private ?Fiche $fiche = null;
 
-
     #[ORM\Column(length: 250)]
     #[Groups(['user:read'])]
     private ?string $description = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     #[Groups(['user:read'])]
-    private ?DateTime $date_tache = null;
+    private ?\DateTime $date_tache = null;
 
     #[ORM\Column(nullable: true)]
     private ?bool $autonomie = null;
@@ -48,13 +45,12 @@ class Tache
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     #[Groups(['user:read'])]
-    private ?DateTime $date_creation = null;
+    private ?\DateTime $date_creation = null;
 
     public function __construct()
     {
-        $this->date_creation = new DateTime('now');
+        $this->date_creation = new \DateTime('now');
     }
-
 
     public function getId(): ?int
     {
@@ -68,13 +64,12 @@ class Tache
         return $this;
     }
 
-
-    public function getDateTache(): ?DateTime
+    public function getDateTache(): ?\DateTime
     {
         return $this->date_tache;
     }
 
-    public function setDateTache(DateTime $date_tache): static
+    public function setDateTache(\DateTime $date_tache): static
     {
         $this->date_tache = $date_tache;
 
@@ -141,12 +136,12 @@ class Tache
         return $this;
     }
 
-    public function getDateCreation(): ?DateTime
+    public function getDateCreation(): ?\DateTime
     {
         return $this->date_creation;
     }
 
-    public function setDateCreation(?DateTime $date_creation): static
+    public function setDateCreation(?\DateTime $date_creation): static
     {
         $this->date_creation = $date_creation;
 
@@ -156,18 +151,19 @@ class Tache
     #[Groups(['user:read'])]
     public function getCategorie(): ?string
     {
-        $m = "pas de status";
+        $m = 'pas de status';
         if ($this->autonomie) {
-            $m = "autonomie";
+            $m = 'autonomie';
         } elseif ($this->surveille) {
-            $m = "surveille";
+            $m = 'surveille';
         } elseif ($this->observation) {
-            $m = "observation";
+            $m = 'observation';
         } elseif ($this->ferie) {
-            $m = "ferie";
+            $m = 'ferie';
         } elseif ($this->absence) {
-            $m = "absence";
+            $m = 'absence';
         }
+
         return $m;
     }
 
@@ -179,12 +175,12 @@ class Tache
         $this->ferie = false;
         $this->absence = false;
         match (strtolower($catNom)) {
-            "autonomie" => $this->setAutonomie(true),
-            "surveille" => $this->setSurveille(true),
-            "observation" => $this->setObservation(true),
-            "ferie" => $this->setFerie(true),
-            "absence" => $this->setAbsence(true),
-            default => null
+            'autonomie' => $this->setAutonomie(true),
+            'surveille' => $this->setSurveille(true),
+            'observation' => $this->setObservation(true),
+            'ferie' => $this->setFerie(true),
+            'absence' => $this->setAbsence(true),
+            default => null,
         };
     }
 

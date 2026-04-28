@@ -11,10 +11,6 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
-use Symfony\Component\Serializer\Attribute\MaxDepth;
-use Symfony\Component\Validator\Constraints as Assert;
-
-
 
 #[ORM\Entity(repositoryClass: UtilisateurRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
@@ -50,8 +46,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?bool $actif = null;
 
-
-
     /**
      * @var Collection<int, Tutorat>
      */
@@ -79,6 +73,8 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         $this->tutorats = new ArrayCollection();
         $this->suiviPedagogiques = new ArrayCollection();
         $this->commentaires = new ArrayCollection();
+        $this->date_creation = new \DateTime();
+        $this->actif = true;
     }
 
     public function getUserIdentifier(): string
@@ -89,16 +85,13 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function getRoles(): array
     {
         return match (Role::tryFrom($this->role)) {
-            Role::ADMINISTRATEUR       => ['ROLE_ADMIN', 'ROLE_USER'],
-            Role::PROFESSEUR_REFERENT  => ['ROLE_PROFESSEUR', 'ROLE_USER'],
-            Role::ALTERNANT             => ['ROLE_ALTERNANT', 'ROLE_USER'],
-            Role::TUTEUR               => ['ROLE_TUTEUR', 'ROLE_USER'],
-            default                             => ['ROLE_USER'],
+            Role::ADMINISTRATEUR => ['ROLE_ADMIN', 'ROLE_USER'],
+            Role::PROFESSEUR_REFERENT => ['ROLE_PROFESSEUR', 'ROLE_USER'],
+            Role::ALTERNANT => ['ROLE_ALTERNANT', 'ROLE_USER'],
+            Role::TUTEUR => ['ROLE_TUTEUR', 'ROLE_USER'],
+            default => ['ROLE_USER'],
         };
     }
-
-
-
 
     public function getPassword(): ?string
     {

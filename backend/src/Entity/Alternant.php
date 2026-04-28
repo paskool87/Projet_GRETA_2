@@ -2,12 +2,18 @@
 
 namespace App\Entity;
 
+use App\Dto\AlternantResponseDto;
 use App\Repository\AlternantRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\Order;
 use Doctrine\DBAL\Types\Types;
-use Symfony\Component\Serializer\Attribute\Groups;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\ObjectMapper\Attribute\Map;
+use Symfony\Component\Serializer\Attribute\Groups;
+
+
 
 #[ORM\Entity(repositoryClass: AlternantRepository::class)]
 class Alternant
@@ -37,8 +43,8 @@ class Alternant
     private Collection $suiviPedagogiques;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
-    #[ORM\JoinColumn(nullable: false)]
     #[Groups(['user:read'])]
+    #[ORM\JoinColumn(nullable: false)]
     private ?Utilisateur $utilisateur = null;
 
     #[ORM\ManyToOne(inversedBy: 'alternants')]
@@ -46,7 +52,6 @@ class Alternant
     private ?Formation $formation = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
-    #[Groups(['user:read'])]
     private ?\DateTime $date_creation = null;
 
     #[ORM\Column]
@@ -58,6 +63,8 @@ class Alternant
         $this->fiches = new ArrayCollection();
         $this->suiviPedagogiques = new ArrayCollection();
         $this->tutorats = new ArrayCollection();
+        $this->date_creation = new \DateTime();
+        $this->actif = true;
     }
 
     public function getId(): ?int
@@ -220,5 +227,19 @@ class Alternant
         $this->formation = $formation;
 
         return $this;
+    }
+
+    public function getDerniereFiche(): ?Fiche
+    {
+        // On crée un critère de recherche
+        $criteria = Criteria::create()
+            ->orderBy(['date_debut' => Order::Descending])
+            ->setMaxResults(1);
+
+        // - Si les fiches sont déjà chargées, il trie en PHP.
+        // - Si elles ne sont pas chargées, il fait une requête SQL optimisée (LIMIT 1).
+        $derniereFiche = $this->fiches->matching($criteria)->first();
+
+        return $derniereFiche ?: null;
     }
 }

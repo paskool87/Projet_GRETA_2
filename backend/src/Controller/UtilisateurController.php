@@ -2,14 +2,16 @@
 
 namespace App\Controller;
 
+use App\Entity\Alternant;
+use App\Entity\Formation;
+use App\Entity\SuiviPedagogique;
+use App\Entity\Tutorat;
 use App\Entity\Utilisateur;
-use App\Enum\Role;;
-
+use App\Enum\Role;
 use App\Repository\UtilisateurRepository;
-use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
-use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,65 +19,66 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[IsGranted('ROLE_USER')]
 #[Route('api/utilisateur')]
 final class UtilisateurController extends AbstractController
 {
-
     public function __construct(
-        private SerializerInterface $serializer,
         private ValidatorInterface $validator,
-        private UserPasswordHasherInterface $passwordHasher
-
+        private UserPasswordHasherInterface $passwordHasher,
     ) {}
 
-    #[IsGranted('ROLE_ADMIN')]
     #[Route(name: 'app_utilisateur_index', methods: ['GET'])]
     public function index(
-        UtilisateurRepository $utilisateurRepository,
+        #[CurrentUser] Utilisateur $utilisateurConnecte
     ): JsonResponse {
-        $utilisateurs = $utilisateurRepository->findAll();
-
-        return $this->json($utilisateurs, Response::HTTP_OK, [], [
-            'groups' => ['admin'],
+        return $this->json($utilisateurConnecte, Response::HTTP_OK, [], [
+            'groups' => ['user:read'],
         ]);
     }
 
-
+    #[IsGranted('ROLE_ADMIN')]
     #[Route('/{id}', name: 'app_utilisateur_show', methods: ['GET'])]
-
-    public function show(?Utilisateur $utilisateur, #[CurrentUser] Utilisateur $utilisateurconnecte): JsonResponse
+    public function show(?Utilisateur $utilisateur, #[CurrentUser] Utilisateur $utilisateurconnecte, EntityManagerInterface $entityManager): JsonResponse
     {
         // Si l'utilisateur n'est pas trouvé
         if (null === $utilisateur || !$utilisateur->isActif()) {
-            return $this->json(["erreur" => "Utilisateur non trouve ou desactive"], Response::HTTP_NOT_FOUND);
-        };
+            throw $this->createNotFoundException('Utilisateur non trouve ou desactive');
+        }
+
+        if ($utilisateur->getId() === $utilisateurconnecte->getId()) {
+            return $this->json($utilisateur, 200, [], [
+                'groups' => ['user:read'],
+            ]);
+        }
 
         $role = $utilisateurconnecte->getRole();
-        if ($role === Role::ALTERNAT->label()) {
-            if ($utilisateur->getId() !== $utilisateurconnecte->getId()) {
-                return $this->json($utilisateur, 200, [], [
-                    'groups' => ['user'],
-                ]);
+        if ($role === Role::TUTEUR->name) {
+            // On verifie que le tuteur a le droit de voir les informations de cet utilisateur (il doit être le tuteur d'un alternant qui est lié à cet utilisateur)
+            $alternant = $entityManager->getRepository(Tutorat::class)->findAlternantByTuteurId($utilisateurconnecte->getId(), $utilisateur->getId());
+            if (null === $alternant) {
+                throw $this->createAccessDeniedException('Permission non accorde');
             }
-            return $this->json(["erreur" => "Permission non acorde"], Response::HTTP_FORBIDDEN,);
-        } else if ($role === Role::PROFESSEUR_REFERENT->label() || $role === Role::TUTEUR->label()) {
-            $tableAssoc = $role === Role::PROFESSEUR_REFERENT->label() ? $utilisateurconnecte->getSuiviPedagogiques() : $utilisateurconnecte->getTutorats();
-            foreach ($tableAssoc as $sp) {
-                $utilisater_a_tester = $sp->getAlternantId()->getUtilisateurId();
-                if ($utilisater_a_tester === $utilisateur) {
-                    return $this->json($utilisater_a_tester, 200, [], ['groups' => ['user']]);
-                }
+
+            return $this->json($utilisateur, 200, [], [
+                'groups' => ['user:read'],
+            ]);
+        } elseif ($role === Role::PROFESSEUR_REFERENT->name) {
+            // On verifie que le tuteur a le droit de voir les informations de cet utilisateur (il doit être le tuteur d'un alternant qui est lié à cet utilisateur)
+            $alternant = $entityManager->getRepository(SuiviPedagogique::class)->findAlternantByProfesseurId($utilisateurconnecte->getId(), $utilisateur->getId());
+            if (null === $alternant) {
+                throw $this->createAccessDeniedException('Permission non accorde');
             }
-            return $this->json(["erreur" => "Utilisateur pas trouve"], Response::HTTP_NOT_FOUND);
-        };
+
+            return $this->json($utilisateur, 200, [], [
+                'groups' => ['user:read'],
+            ]);
+        }
 
         return $this->json($utilisateur, 200, [], [
-            'groups' => ['user', 'admin'],
+            'groups' => ['user:read'],
         ]);
     }
 
@@ -83,95 +86,126 @@ final class UtilisateurController extends AbstractController
     #[IsGranted('ROLE_ADMIN')]
     public function new(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
-        try {
-            //On decode les données de la requete en se basant sur le modelle de l'entité "Utilisateur" et en creé une variable
-            $utilisateur = $this->serializer->deserialize(
-                $request->getContent(),
-                Utilisateur::class,
-                'json',
-                [
-                    AbstractNormalizer::IGNORED_ATTRIBUTES => [
-                        'id',
-                        'date_creation',
-                        'tutorats',
-                        'suiviPedagogiques'
-                    ],
-                    AbstractNormalizer::CALLBACKS => [
-                        'mot_de_passe' => function (string $plainPassword, Utilisateur $object): string {
-                            return $this->passwordHasher->hashPassword($object, $plainPassword);
-                        }
-                    ]
-                ]
-            );
+        // On decode les données de la requete en se basant sur le modelle de l'entité "Utilisateur" et en creé une variable
+        $data = json_decode($request->getContent(), true);
+        $nom = $data['nom'] ?? null;
+        $prenom = $data['prenom'] ?? null;
+        $email = $data['email'] ?? null;
+        $role = $data['role'] ?? null;
+        $motdepasse = $data['motdepasse'] ?? null;
+
+        if (!$nom || !$prenom || !$email || !$role || !$motdepasse) {
+            throw new BadRequestException('Données incompletes (nom, prenom, email, role ou motdepasse manquant)');
+        }
+
+        $role = strtoupper($role);
+        // On verifie que le role est valide
+        if (!in_array($role, Role::cases())) {
+            throw new BadRequestException('Role invalide');
+        }
+
+        // On verifie que l'email n'est pas deja utilisé
+        $existingUser = $entityManager->getRepository(Utilisateur::class)->findOneBy(['email' => $email]);
+        if ($existingUser) {
+            throw new BadRequestException('Email deja utilise');
+        }
+
+        // On crée un utilisateur et on lui affecte les données de la requete
+        $utilisateur = new Utilisateur();
+        $utilisateur->setNom($nom);
+        $utilisateur->setPrenom($prenom);
+        $utilisateur->setEmail($email);
+        $utilisateur->setRole($role);
+        $utilisateur->setMotDePasse($this->passwordHasher->hashPassword($utilisateur, $motdepasse));
+        $utilisateur->setDateCreation(new \DateTime('now'));
 
 
-            $utilisateur->setDateCreation(new DateTime("now"));
+        $formation_id = $data['formation_id'] ?? null;
+        if ($role === Role::ALTERNANT->name && $formation_id) {
+            $formation = $entityManager->getRepository(Formation::class)->find($formation_id);
+            if (null === $formation) {
+                throw new BadRequestException('Formation non trouve');
+            }
+            $alternant = new Alternant();
+            $alternant->setUtilisateur($utilisateur);
+            $alternant->setFormation($formation);
+            $entityManager->persist($alternant);
 
-            //On verifie si l'utilisateur est valde par rapport aux contraintes que l'on appliqué dans config/validator/validator.yaml
-            $errors = $this->validator->validate($utilisateur);
+            // On verifie si l'utilisateur est valide
+            $errors = $this->validator->validate($alternant);
             if (count($errors) > 0) {
                 return $this->json($errors, Response::HTTP_BAD_REQUEST);
             }
-
-            // On enregistre l'utilisateur en base de données
-            $entityManager->persist($utilisateur);
-            $entityManager->flush();
-
-            return $this->json(["message" => "Utilisateur cree", "details" => $utilisateur], Response::HTTP_CREATED, [],  [
-                'groups' => ['admin', 'user'],
-            ]);
-        } catch (Exception $e) {
-            return $this->json(["erreur" => $e->getMessage()], 500);
         }
+
+        // On verifie si l'utilisateur est valide 
+        $errors = $this->validator->validate($utilisateur);
+        if (count($errors) > 0) {
+            return $this->json($errors, Response::HTTP_BAD_REQUEST);
+        }
+
+        // On enregistre l'utilisateur en base de données
+        $entityManager->persist($utilisateur);
+        $entityManager->flush();
+
+        return $this->json($utilisateur, Response::HTTP_CREATED, [], [
+            'groups' => ['user:read'],
+        ]);
     }
 
-
-    #[IsGranted('ROLE_ADMIN')]
     #[Route('/{id}/edit', name: 'app_utilisateur_edit', methods: ['PUT'])]
     public function edit(Request $request, ?Utilisateur $utilisateur, EntityManagerInterface $entityManager): JsonResponse
     {
         try {
             // Si l'utilisateur n'est pas trouvé
             if (null === $utilisateur) {
-                return $this->json(["erreur" => "Utilisateur non trouve"], Response::HTTP_NOT_FOUND);
+                return $this->json(['erreur' => 'Utilisateur non trouve'], Response::HTTP_NOT_FOUND);
             }
-            //On decode les données de la requete en se basant sur le modelle de l'entité "Utilisateur" et on modifie l'utilisateur 
-            $this->serializer->deserialize(
-                $request->getContent(), // body JSON
-                Utilisateur::class,
-                'json',
-                [
-                    AbstractNormalizer::OBJECT_TO_POPULATE => $utilisateur,
-                    AbstractNormalizer::IGNORED_ATTRIBUTES => [
-                        'id',
-                        'date_creation',
-                        'tutorats',
-                        'suiviPedagogiques'
-                    ],
-                    AbstractNormalizer::CALLBACKS => [
-                        'mot_de_passe' => function (mixed $attributeValue, object|string $object): string {
-                            $user = is_object($object) ? $object : new Utilisateur();
-                            return $this->passwordHasher->hashPassword($user, $attributeValue);
-                        }
-                    ]
-                ]
-            );
+            // on verifie que l'utilisateur connecté a le droit de modifier cet utilisateur
+            $utilisateurConnecte = $this->getUser();
+            if ($utilisateurConnecte != $utilisateur && !$this->isGranted('ROLE_ADMIN')) {
+                throw $this->createAccessDeniedException('Permission non accorde');
+            }
 
-            //On verifie si l'utilisateur est valide par rapport aux contraintes que l'on appliqué dans config/validator/validator.yaml
+            // On decode les données de la requete
+            $data = json_decode($request->getContent(), true);
+            $nom = $data['nom'] ?? null;
+            $prenom = $data['prenom'] ?? null;
+            $email = $data['email'] ?? null;
+            $motdepasse = $data['motdepasse'] ?? null;
+
+            if ($email !== $utilisateur->getEmail() && $email) {
+                // On verifie que l'email n'est pas deja utilisé
+                $existingUser = $entityManager->getRepository(Utilisateur::class)->findOneBy(['email' => $email]);
+                if ($existingUser) {
+                    throw new BadRequestException('Email deja utilise');
+                }
+                $utilisateur->setEmail($email);
+            }
+            if ($nom !== $utilisateur->getNom() && $nom) {
+                $utilisateur->setNom($nom);
+            }
+            if ($prenom !== $utilisateur->getPrenom() &&  $prenom) {
+                $utilisateur->setPrenom($prenom);
+            }
+            if ($motdepasse) {
+                $utilisateur->setMotDePasse($this->passwordHasher->hashPassword($utilisateur, $motdepasse));
+            }
+            // On verifie si l'utilisateur est valide
             $errors = $this->validator->validate($utilisateur);
             if (count($errors) > 0) {
                 return $this->json($errors, Response::HTTP_BAD_REQUEST);
             }
 
-            //On enregistre l'utilisateur modifié
+            // On enregistre l'utilisateur modifié
             $entityManager->persist($utilisateur);
             $entityManager->flush();
 
             return $this->json($utilisateur, Response::HTTP_OK, [], [
-                'groups' => ['user', 'admin'],
+                'groups' => ['user:read'],
             ]);
-        } catch (Exception $e) {
-            return $this->json(["erreur" => $e->getMessage()], 500);
+        } catch (\Exception $e) {
+            return $this->json(['erreur' => $e->getMessage()], 500);
         }
     }
 
@@ -182,16 +216,16 @@ final class UtilisateurController extends AbstractController
         try {
             // Si l'utilisateur n'est pas trouvé
             if (null === $utilisateur) {
-                return $this->json(["erreur" => "Utilisateur non trouve"], Response::HTTP_NOT_FOUND);
+                return $this->json(['erreur' => 'Utilisateur non trouve'], Response::HTTP_NOT_FOUND);
             }
 
             // On supprime l'utilisateur en base de données
             $entityManager->remove($utilisateur);
             $entityManager->flush();
 
-            return $this->json(["message" => "Utilisateur suprime"], Response::HTTP_ACCEPTED);
-        } catch (Exception $e) {
-            return $this->json(["erreur" => $e->getMessage()], 500);
+            return $this->json(['message' => 'Utilisateur suprime'], Response::HTTP_ACCEPTED);
+        } catch (\Exception $e) {
+            return $this->json(['erreur' => $e->getMessage()], 500);
         }
     }
 }
