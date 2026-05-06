@@ -2,7 +2,7 @@
   &-main {
     margin-top: 50px;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 2fr;
 
     &-table {
       width: 50%;
@@ -45,6 +45,9 @@
       height: 400px;
 
       &-header {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr 2fr;
+
         & h3 {
           margin-top: 20px;
           color: var(--color-secondary);
@@ -62,7 +65,7 @@
           & li {
             padding: 5px;
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr 2fr;
             text-decoration: none;
 
             & a {
