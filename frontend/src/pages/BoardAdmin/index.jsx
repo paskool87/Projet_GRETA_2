@@ -13,6 +13,9 @@ import soumiseIcon from "../../assets/images/panneau_orange.png";
 import valideIcon from "../../assets/images/pouce_vert.png";
 import criteresIcon from "../../assets/images/pouce_vers_bas.png";
 
+import { FakeApi_fiche } from "../../Datas/FakeApi_fiche"; // Importez les données factices
+import alternants from "../../Datas/MakeAlternants"; // Importez les données factices
+
 import "./BoardAdmin.scss";
 
 function BoardAdmin() {
@@ -21,19 +24,24 @@ function BoardAdmin() {
   const saveLocation = useSaveLocation("noms");
   const lastMondays = useLastMondays();
 
-  const { data, loading, error } = useFetch(
+  /*const { data, loading, error } = useFetch(
     `${BASE_URL}/api/fiche`,
     "cache_api",
   );
 
   if (loading) return <p>Chargement...</p>;
-  if (error) return <p>Erreur : {error.message}</p>;
+  if (error) return <p>Erreur : {error.message}</p>;*/
+  const data = alternants; // Utilisez les données factices
+
+  console.log("Données récupérées :", data);
 
   const listeAlternants = data.map((alt) => {
     const fiches = alt.fiche || [];
 
-    // ajuster les variablespour correspondre à la semaine dernière(fiche à valider) (surement faire length -2 pour dernière_fiche)
+    // ajuster les variables pour correspondre à la semaine dernière(fiche à valider) (surement faire length -2 pour dernière_fiche)
     const derniere_fiche = fiches.length > 0 ? fiches[fiches.length - 1] : null;
+
+    const allStatusFiches = fiches.map((f) => f.status_fiche);
 
     const pastFichesAlternants = fiches.slice(0, -1).map((f) => ({
       id: f.id,
@@ -59,6 +67,7 @@ function BoardAdmin() {
       status: derniere_fiche?.status_fiche ?? null,
       pastFichesAlternant: pastFichesAlternants,
       last4FichesAlternant: last4Fiches,
+      allStatusFichesAlternant: allStatusFiches,
     };
   });
   const statusIcons = {
@@ -152,7 +161,7 @@ function BoardAdmin() {
           <div className="board-admin-main-list">
             <div className="board-admin-main-list-header">
               <h3>{filtre}</h3>
-            
+
               <p>{lastMondays[0]}</p>
               <p></p>
               <p>{lastMondays[1]}</p>
@@ -161,7 +170,6 @@ function BoardAdmin() {
               <p></p>
               <p></p>
               <p>{lastMondays[3]}</p>
-              
             </div>
             <div className="board-admin-main-list-content">
               <ul>
@@ -177,10 +185,13 @@ function BoardAdmin() {
                     {alt.last4FichesAlternant.map((f, i) => (
                       <>
                         <span key={i} className="fiche-badge">
+                          {"\u00A0"}
+
                           {f.status}
                         </span>
 
                         <span>
+                          {"\u00A0"}
                           <img
                             src={statusIcons[f.status]}
                             alt={f.status}
