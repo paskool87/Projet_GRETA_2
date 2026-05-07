@@ -8,6 +8,11 @@ import useLastMondays from "../../hooks/useLastMondays";
 import useFetch from "../../hooks/useFetch";
 import { BASE_URL } from "../../config";
 
+import brouillonIcon from "../../assets/images/panneau_attention.png";
+import soumiseIcon from "../../assets/images/panneau_orange.png";
+import valideIcon from "../../assets/images/pouce_vert.png";
+import criteresIcon from "../../assets/images/pouce_vers_bas.png";
+
 import "./BoardAdmin.scss";
 
 function BoardAdmin() {
@@ -56,6 +61,13 @@ function BoardAdmin() {
       last4FichesAlternant: last4Fiches,
     };
   });
+  const statusIcons = {
+    BROUILLON: brouillonIcon,
+    SOUMISE: soumiseIcon,
+    VALIDE: valideIcon,
+    CRITERES_NON_REMPLIS: criteresIcon,
+  };
+
   const mapping = {
     "Total alternants": () => true,
 
@@ -67,7 +79,6 @@ function BoardAdmin() {
 
     "Critères non remplis": (item) => item.status === "CRITERES_NON_REMPLIS",
   };
-
   const lignes = Object.keys(mapping);
 
   const groupes = [
@@ -141,10 +152,16 @@ function BoardAdmin() {
           <div className="board-admin-main-list">
             <div className="board-admin-main-list-header">
               <h3>{filtre}</h3>
+            
               <p>{lastMondays[0]}</p>
+              <p></p>
               <p>{lastMondays[1]}</p>
+              <p></p>
               <p>{lastMondays[2]}</p>
+              <p></p>
+              <p></p>
               <p>{lastMondays[3]}</p>
+              
             </div>
             <div className="board-admin-main-list-content">
               <ul>
@@ -156,11 +173,21 @@ function BoardAdmin() {
                     >
                       {alt.nom} {alt.prenom}
                     </Link>
-                   
+
                     {alt.last4FichesAlternant.map((f, i) => (
-                      <span key={i} className="fiche-badge">
-                        {f.status}
-                      </span>
+                      <>
+                        <span key={i} className="fiche-badge">
+                          {f.status}
+                        </span>
+
+                        <span>
+                          <img
+                            src={statusIcons[f.status]}
+                            alt={f.status}
+                            className="fiche-icon"
+                          />
+                        </span>
+                      </>
                     ))}
                   </li>
                 ))}
