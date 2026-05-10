@@ -22,8 +22,7 @@ final class FormationController extends AbstractController
     public function __construct(
         private SerializerInterface $serializer,
         private ValidatorInterface $validator,
-    ) {
-    }
+    ) {}
 
     #[Route(name: 'app_formation_index', methods: ['GET'])]
     public function index(
@@ -32,7 +31,7 @@ final class FormationController extends AbstractController
         $formations = $formationRepository->findAll();
 
         return $this->json($formations, Response::HTTP_OK, [], [
-            'groups' => ['admin'],
+            'groups' => ['user:read'],
         ]);
     }
 
@@ -45,7 +44,7 @@ final class FormationController extends AbstractController
         }
 
         return $this->json($formation, 200, [], [
-            'groups' => ['admin'],
+            'groups' => ['user:read'],
         ]);
     }
 
@@ -60,8 +59,6 @@ final class FormationController extends AbstractController
                 'json'
             );
 
-            $formation->setDateCreation(new \DateTime('now'));
-
             // On verifie si l'formation est valde par rapport aux contraintes que l'on appliqué dans config/validator/validator.yaml
             $errors = $this->validator->validate($formation);
             if (count($errors) > 0) {
@@ -73,7 +70,7 @@ final class FormationController extends AbstractController
             $entityManager->flush();
 
             return $this->json($formation, Response::HTTP_OK, [], [
-                'groups' => ['admin'],
+                'groups' => ['user:read'],
             ]);
         } catch (\Exception $e) {
             return $this->json(['erreur' => $e->getMessage()], 500);
@@ -108,7 +105,7 @@ final class FormationController extends AbstractController
             $entityManager->flush();
 
             return $this->json($formation, Response::HTTP_OK, [], [
-                'groups' => ['admin'],
+                'groups' => ['user:read'],
             ]);
         } catch (\Exception $e) {
             return $this->json(['erreur' => $e->getMessage()], 500);

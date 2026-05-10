@@ -107,8 +107,9 @@ final class UtilisateurController extends AbstractController
 
         $role = strtoupper($role);
         // On verifie que le role est valide
-        if (!in_array($role, Role::cases())) {
-            throw new BadRequestException('Role invalide');
+        $role_a_tester = array_map(fn($r) => $r->name, Role::cases());
+        if (!in_array($role, $role_a_tester)) {
+            throw new BadRequestException('Role invalide (doit etre un des suivants : ' . implode(', ', $role_a_tester) . ')');
         }
 
         // On verifie que l'email n'est pas deja utilisé
@@ -128,7 +129,10 @@ final class UtilisateurController extends AbstractController
 
 
         $formation_id = $data['formation_id'] ?? null;
-        if ($role === Role::ALTERNANT->name && $formation_id) {
+        if ($role === Role::ALTERNANT->name) {
+            if (!$formation_id) {
+                throw new BadRequestException('ID de formation requis pour un alternant');
+            }
             $formation = $entityManager->getRepository(Formation::class)->find($formation_id);
             if (null === $formation) {
                 throw new BadRequestException('Formation non trouve');

@@ -68,7 +68,7 @@
             "ref": "6cf95ac1baa3d6f5816dd4db7281997912f239a6"
         },
         "files": [
-            ".php-cs-fixer.dist.php"
+            ".php-cs-fixer.dist.php"]},
     "nelmio/cors-bundle": {
         "version": "2.6",
         "recipe": {
