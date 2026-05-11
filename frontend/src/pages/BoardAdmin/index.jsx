@@ -7,11 +7,9 @@ import Button from "../../components/Button/Button";
 import GetLastWeek from "../../components/GetLastWeek/GetLastWeek";
 import StatusIcons from "../../components/StatusIcons/StatusIcons";
 
-
 import useLastMondays from "../../hooks/useLastMondays";
 import useFetch from "../../hooks/useFetch";
 import { BASE_URL } from "../../config";
-
 
 import { FakeApi_fiche } from "../../Datas/FakeApi_fiche"; // Importez les données factices
 import alternants from "../../Datas/MakeAlternants"; // Importez les données factices
@@ -100,8 +98,16 @@ function BoardAdmin() {
       .filter(mapping[titre]).length;
   };
 
-  const dataFiltree = listeAlternants.filter((item) => {
-    const matchStatut = mapping[filtre](item);
+  const dataFiltreeTotal = listeAlternants.filter((item) => {
+    const matchStatut = mapping["Total alternants"](item);
+    const matchGroupe =
+      groupe === "Tous" ||
+      parseInt(item.formationId, 10) === parseInt(groupe, 10);
+    return matchStatut && matchGroupe;
+  });
+
+  const dataFiltreeAttente = listeAlternants.filter((item) => {
+    const matchStatut = mapping["En attente de validation"](item);
     const matchGroupe =
       groupe === "Tous" ||
       parseInt(item.formationId, 10) === parseInt(groupe, 10);
@@ -120,7 +126,6 @@ function BoardAdmin() {
         <PrincipalTitle />
 
         <div className="board-admin-main">
-
           {/* vue globale semaine précédente */}
           <div className="board-admin-main-global">
             <GetLastWeek />
@@ -129,7 +134,19 @@ function BoardAdmin() {
               <div key={index} className="board-admin-main-global-item">
                 <h3>{titre}</h3>
                 <p>{getCount(titre)}</p>
-                <StatusIcons status={titre === "Fiche validée" ? "VALIDE" : titre === "En attente de validation" ? "SOUMISE" : titre === "Fiches non remplies" ? "BROUILLON" : titre === "Critères non remplis" ? "CRITERES_NON_REMPLIS" : null} />
+                <StatusIcons
+                  status={
+                    titre === "Fiche validée"
+                      ? "VALIDE"
+                      : titre === "En attente de validation"
+                      ? "SOUMISE"
+                      : titre === "Fiches non remplies"
+                      ? "BROUILLON"
+                      : titre === "Critères non remplis"
+                      ? "CRITERES_NON_REMPLIS"
+                      : null
+                  }
+                />
               </div>
             ))}
           </div>
@@ -167,59 +184,97 @@ function BoardAdmin() {
           </div>
                 */}
           {/* LISTE */}
-          <div className="board-admin-main-list">
-            <div className="board-admin-main-list-header">
-              <h3>{filtre}</h3>
 
-              <p>{lastMondays[0]}</p>
-              <p>{lastMondays[1]}</p>
-              <p>{lastMondays[2]}</p>
-              <p>{lastMondays[3]}</p>
+          <div className="board-admin-main-lists">
+            <div className="board-admin-main-lists-list">
+              <div className="board-admin-main-lists-list-header">
+                <h3>Total alternants</h3>
+
+                <p>{lastMondays[0]}</p>
+                <p>{lastMondays[1]}</p>
+                <p>{lastMondays[2]}</p>
+                <p>{lastMondays[3]}</p>
+              </div>
+              <div className="board-admin-main-lists-list-content">
+                <ul>
+                  {dataFiltreeTotal.map((alt) => (
+                    <li key={alt.alternantId}>
+                      <Link
+                        to={`/FicheAlternant/${alt.alternantId}`}
+                        onClick={saveLocation}
+                      >
+                        {alt.nom} {alt.prenom}
+                      </Link>
+
+                      {alt.last4FichesAlternant.map((f, i) => (
+                        <>
+                          <div key={i} className="fiche-date">
+                            <span key={i} className="fiche-badge">
+                              {f.status}
+                            </span>
+
+                            <span>
+                              <StatusIcons status={f.status} />
+                            </span>
+                          </div>
+                        </>
+                      ))}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
-            <div className="board-admin-main-list-content">
-              <ul>
-                {dataFiltree.map((alt) => (
-                  <li key={alt.alternantId}>
-                    <Link
-                      to={`/FicheAlternant/${alt.alternantId}`}
-                      onClick={saveLocation}
-                    >
-                      {alt.nom} {alt.prenom}
-                    </Link>
+            <div className="board-admin-main-lists-list">
+              <div className="board-admin-main-lists-list-header">
+                <h3>En attente de validation</h3>
 
-                    {alt.last4FichesAlternant.map((f, i) => (
-                      <>
-                      <div key={i} className="fiche-date">
-                        <span key={i} className="fiche-badge">
+                <p>{lastMondays[0]}</p>
+                <p>{lastMondays[1]}</p>
+                <p>{lastMondays[2]}</p>
+                <p>{lastMondays[3]}</p>
+              </div>
+              <div className="board-admin-main-lists-list-content">
+                <ul>
+                  {dataFiltreeAttente.map((alt) => (
+                    <li key={alt.alternantId}>
+                      <Link
+                        to={`/FicheAlternant/${alt.alternantId}`}
+                        onClick={saveLocation}
+                      >
+                        {alt.nom} {alt.prenom}
+                      </Link>
 
-                          {f.status}
-                        </span>
+                      
+                        <>
+                          <div  className="fiche-date">
+                            <span  className="fiche-badge">
+                              {alt.last4FichesAlternant[0]?.status || "N/A"}
+                            </span>
 
-                        <span>
-                          <StatusIcons status={f.status} />
-                        </span>
-                      </div>
-                      </>
-                    ))}
-                  </li>
-                ))}
-              </ul>
+                            <span>
+                              <StatusIcons status={alt.last4FichesAlternant[0]?.status} />
+                            </span>
+                          </div>
+                        </>
+                      
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
-            {/* FILTRE GROUPE */}
-            <div className="board-admin-main-list-filter">
-              <label>Groupe :</label>
+          </div>
 
-              <select
-                value={groupe}
-                onChange={(e) => setGroupe(e.target.value)}
-              >
-                {groupes.map((g, index) => (
-                  <option key={index} value={g}>
-                    {g}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* FILTRE GROUPE */}
+          <div className="board-admin-main-filter">
+            <label>Groupe :</label>
+
+            <select value={groupe} onChange={(e) => setGroupe(e.target.value)}>
+              {groupes.map((g, index) => (
+                <option key={index} value={g}>
+                  {g}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
