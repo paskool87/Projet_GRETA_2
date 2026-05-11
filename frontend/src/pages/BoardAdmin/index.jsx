@@ -4,14 +4,14 @@ import useSaveLocation from "../../hooks/useSaveLocation";
 import PrincipalTitle from "../../components/PrincipalTitle/PrincipalTitle";
 import Navbar from "../../components/Navbar/Navbar";
 import Button from "../../components/Button/Button";
+import GetLastWeek from "../../components/GetLastWeek/GetLastWeek";
+import StatusIcons from "../../components/StatusIcons/StatusIcons";
+
+
 import useLastMondays from "../../hooks/useLastMondays";
 import useFetch from "../../hooks/useFetch";
 import { BASE_URL } from "../../config";
 
-import brouillonIcon from "../../assets/images/panneau_attention.png";
-import soumiseIcon from "../../assets/images/panneau_orange.png";
-import valideIcon from "../../assets/images/pouce_vert.png";
-import criteresIcon from "../../assets/images/pouce_vers_bas.png";
 
 import { FakeApi_fiche } from "../../Datas/FakeApi_fiche"; // Importez les données factices
 import alternants from "../../Datas/MakeAlternants"; // Importez les données factices
@@ -24,6 +24,7 @@ function BoardAdmin() {
   const saveLocation = useSaveLocation("noms");
   const lastMondays = useLastMondays();
 
+  // ne pas effacer l'appel API
   /*const { data, loading, error } = useFetch(
     `${BASE_URL}/api/fiche`,
     "cache_api",
@@ -31,6 +32,7 @@ function BoardAdmin() {
 
   if (loading) return <p>Chargement...</p>;
   if (error) return <p>Erreur : {error.message}</p>;*/
+
   const data = alternants; // Utilisez les données factices
 
   console.log("Données récupérées :", data);
@@ -70,21 +72,15 @@ function BoardAdmin() {
       allStatusFichesAlternant: allStatusFiches,
     };
   });
-  const statusIcons = {
-    BROUILLON: brouillonIcon,
-    SOUMISE: soumiseIcon,
-    VALIDE: valideIcon,
-    CRITERES_NON_REMPLIS: criteresIcon,
-  };
 
   const mapping = {
     "Total alternants": () => true,
 
-    "Fiches non remplies": (item) => item.status === "BROUILLON",
+    "Fiche validée": (item) => item.status === "VALIDE",
 
     "En attente de validation": (item) => item.status === "SOUMISE",
 
-    "Fiche validée": (item) => item.status === "VALIDE",
+    "Fiches non remplies": (item) => item.status === "BROUILLON",
 
     "Critères non remplis": (item) => item.status === "CRITERES_NON_REMPLIS",
   };
@@ -124,7 +120,20 @@ function BoardAdmin() {
         <PrincipalTitle />
 
         <div className="board-admin-main">
-          {/* TABLEAU */}
+
+          {/* vue globale semaine précédente */}
+          <div className="board-admin-main-global">
+            <GetLastWeek />
+
+            {lignes.map((titre, index) => (
+              <div key={index} className="board-admin-main-global-item">
+                <h3>{titre}</h3>
+                <p>{getCount(titre)}</p>
+                <StatusIcons status={titre === "Fiche validée" ? "VALIDE" : titre === "En attente de validation" ? "SOUMISE" : titre === "Fiches non remplies" ? "BROUILLON" : titre === "Critères non remplis" ? "CRITERES_NON_REMPLIS" : null} />
+              </div>
+            ))}
+          </div>
+          {/* TABLEAU 
           <div className="board-admin-main-table">
             <table>
               <thead>
@@ -156,19 +165,15 @@ function BoardAdmin() {
               </tbody>
             </table>
           </div>
-
+                */}
           {/* LISTE */}
           <div className="board-admin-main-list">
             <div className="board-admin-main-list-header">
               <h3>{filtre}</h3>
 
               <p>{lastMondays[0]}</p>
-              <p></p>
               <p>{lastMondays[1]}</p>
-              <p></p>
               <p>{lastMondays[2]}</p>
-              <p></p>
-              <p></p>
               <p>{lastMondays[3]}</p>
             </div>
             <div className="board-admin-main-list-content">
@@ -184,20 +189,16 @@ function BoardAdmin() {
 
                     {alt.last4FichesAlternant.map((f, i) => (
                       <>
+                      <div key={i} className="fiche-date">
                         <span key={i} className="fiche-badge">
-                          {"\u00A0"}
 
                           {f.status}
                         </span>
 
                         <span>
-                          {"\u00A0"}
-                          <img
-                            src={statusIcons[f.status]}
-                            alt={f.status}
-                            className="fiche-icon"
-                          />
+                          <StatusIcons status={f.status} />
                         </span>
+                      </div>
                       </>
                     ))}
                   </li>
