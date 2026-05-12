@@ -43,7 +43,7 @@ function BoardAdmin() {
 
     const allStatusFiches = fiches.map((f) => f.status_fiche);
 
-    const pastFichesAlternants = fiches.slice(0, -1).map((f) => ({
+    const pastFichesAlternants = fiches.slice(0, -1).map((f) => ({ //slice (0,-2) pour correspondre à la semaine dernière
       id: f.id,
       status: f.status_fiche,
       date: f.date_debut,
@@ -68,6 +68,10 @@ function BoardAdmin() {
       pastFichesAlternant: pastFichesAlternants,
       last4FichesAlternant: last4Fiches,
       allStatusFichesAlternant: allStatusFiches,
+
+      pastNotValidatedCount: pastFichesAlternants.filter(
+        (f) => f.status !== "VALIDE",
+      ).length,
     };
   });
 
@@ -126,7 +130,7 @@ function BoardAdmin() {
         <PrincipalTitle />
 
         <div className="board-admin-main">
-          {/* vue globale semaine précédente */}
+          {/* vue globale semaine précédente(semmaine à valider) */}
           <div className="board-admin-main-global">
             <GetLastWeek />
 
@@ -194,6 +198,7 @@ function BoardAdmin() {
                 <p>{lastMondays[1]}</p>
                 <p>{lastMondays[2]}</p>
                 <p>{lastMondays[3]}</p>
+                <p>Fiches précédentes non conformes </p>
               </div>
               <div className="board-admin-main-lists-list-content">
                 <ul>
@@ -205,7 +210,6 @@ function BoardAdmin() {
                       >
                         {alt.nom} {alt.prenom}
                       </Link>
-
                       {alt.last4FichesAlternant.map((f, i) => (
                         <>
                           <div key={i} className="fiche-date">
@@ -219,19 +223,26 @@ function BoardAdmin() {
                           </div>
                         </>
                       ))}
+                      <span
+                        className={//remettre 0 et 5
+                          `number-badge
+                          ${alt.pastNotValidatedCount === 10 ? "success" : ""}
+                          ${alt.pastNotValidatedCount > 15 ? "danger" : ""}
+                   `}
+                      >
+                        {alt.pastNotValidatedCount}
+                      </span>
                     </li>
                   ))}
                 </ul>
               </div>
             </div>
+
             <div className="board-admin-main-lists-list">
               <div className="board-admin-main-lists-list-header">
                 <h3>En attente de validation</h3>
 
                 <p>{lastMondays[0]}</p>
-                <p>{lastMondays[1]}</p>
-                <p>{lastMondays[2]}</p>
-                <p>{lastMondays[3]}</p>
               </div>
               <div className="board-admin-main-lists-list-content">
                 <ul>
@@ -244,19 +255,19 @@ function BoardAdmin() {
                         {alt.nom} {alt.prenom}
                       </Link>
 
-                      
-                        <>
-                          <div  className="fiche-date">
-                            <span  className="fiche-badge">
-                              {alt.last4FichesAlternant[0]?.status || "N/A"}
-                            </span>
+                      <>
+                        <div className="fiche-date">
+                          <span className="fiche-badge">
+                            {alt.last4FichesAlternant[0]?.status || "N/A"}
+                          </span>
 
-                            <span>
-                              <StatusIcons status={alt.last4FichesAlternant[0]?.status} />
-                            </span>
-                          </div>
-                        </>
-                      
+                          <span>
+                            <StatusIcons
+                              status={alt.last4FichesAlternant[0]?.status}
+                            />
+                          </span>
+                        </div>
+                      </>
                     </li>
                   ))}
                 </ul>
