@@ -117,6 +117,20 @@ function BoardAdmin() {
       parseInt(item.formationId, 10) === parseInt(groupe, 10);
     return matchStatut && matchGroupe;
   });
+  const dataFiltreeFichesNonRemplies = listeAlternants.filter((item) => {
+    const matchStatut = mapping["Fiches non remplies"](item);
+    const matchGroupe =
+      groupe === "Tous" ||
+      parseInt(item.formationId, 10) === parseInt(groupe, 10);
+    return matchStatut && matchGroupe;
+  });
+  const dataFiltreeCriteres = listeAlternants.filter((item) => {
+    const matchStatut = mapping["Critères non remplis"](item);
+    const matchGroupe =
+      groupe === "Tous" ||
+      parseInt(item.formationId, 10) === parseInt(groupe, 10);
+    return matchStatut && matchGroupe;
+  });
 
   return (
     <>
@@ -154,40 +168,8 @@ function BoardAdmin() {
               </div>
             ))}
           </div>
-          {/* TABLEAU 
-          <div className="board-admin-main-table">
-            <table>
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Semaine concernée</th>
-                  <th>Semaines précédentes</th>
-                </tr>
-              </thead>
 
-              <tbody>
-                {lignes.map((titre, index) => (
-                  <tr key={index}>
-                    <td>
-                      <Button
-                        onClick={() => {
-                          setFiltre(titre);
-                          setGroupe("Tous");
-                        }}
-                      >
-                        {titre}
-                      </Button>
-                    </td>
-
-                    <td>{getCount(titre)}</td>
-                    <td>{getCountPast(titre)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-                */}
-          {/* LISTE */}
+          {/* LISTES */}
 
           <div className="board-admin-main-lists">
             <div className="board-admin-main-lists-list">
@@ -224,7 +206,7 @@ function BoardAdmin() {
                         </>
                       ))}
                       <span
-                        className={//remettre 0 et 5
+                        className={//remettre 0 et 5 (ou 2)
                           `number-badge
                           ${alt.pastNotValidatedCount === 10 ? "success" : ""}
                           ${alt.pastNotValidatedCount > 15 ? "danger" : ""}
@@ -238,7 +220,7 @@ function BoardAdmin() {
               </div>
             </div>
 
-            <div className="board-admin-main-lists-list">
+            <div className="board-admin-main-lists-list second-list">
               <div className="board-admin-main-lists-list-header">
                 <h3>En attente de validation</h3>
 
@@ -273,10 +255,93 @@ function BoardAdmin() {
                 </ul>
               </div>
             </div>
+          
+
+            <div className="board-admin-main-lists-list second-list">
+              <div className="board-admin-main-lists-list-header">
+                <h3> Fiches non remplies </h3>
+
+                <p>{lastMondays[0]}</p>
+              </div>
+              <div className="board-admin-main-lists-list-content">
+                <ul>
+                  {dataFiltreeFichesNonRemplies.map((alt) => (
+                    <li key={alt.alternantId}>
+                      <Link
+                        to={`/FicheAlternant/${alt.alternantId}`}
+                        onClick={saveLocation}
+                      >
+                        {alt.nom} {alt.prenom}
+                      </Link>
+
+                      <>
+                        <div className="fiche-date">
+                          <span className="fiche-badge">
+                            {alt.last4FichesAlternant[0]?.status || "N/A"}
+                          </span>
+
+                          <span>
+                            <StatusIcons
+                              status={alt.last4FichesAlternant[0]?.status}
+                            />
+                          </span>
+                        </div>
+                      </>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <div className="board-admin-main-lists-list second-list">
+              <div className="board-admin-main-lists-list-header">
+                <h3> Critères non remplis </h3>
+
+                <p>{lastMondays[0]}</p>
+              </div>
+              <div className="board-admin-main-lists-list-content">
+                <ul>
+                  {dataFiltreeCriteres.map((alt) => (
+                    <li key={alt.alternantId}>
+                      <Link
+                        to={`/FicheAlternant/${alt.alternantId}`}
+                        onClick={saveLocation}
+                      >
+                        {alt.nom} {alt.prenom}
+                      </Link>
+
+                      <>
+                        <div className="fiche-date">
+                          <span className="fiche-badge">
+                            {alt.last4FichesAlternant[0]?.status || "N/A"}
+                          </span>
+
+                          <span>
+                            <StatusIcons
+                              status={alt.last4FichesAlternant[0]?.status}
+                            />
+                          </span>
+                        </div>
+                      </>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
 
-          {/* FILTRE GROUPE */}
+          {/* FILTRE GROUPE X2 */}
           <div className="board-admin-main-filter">
+            <label>Groupe :</label>
+
+            <select value={groupe} onChange={(e) => setGroupe(e.target.value)}>
+              {groupes.map((g, index) => (
+                <option key={index} value={g}>
+                  {g}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="board-admin-main-filter second-filter">
             <label>Groupe :</label>
 
             <select value={groupe} onChange={(e) => setGroupe(e.target.value)}>
