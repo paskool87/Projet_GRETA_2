@@ -9,6 +9,7 @@ import Title from "../../components/Title/Title";
 import GetLastWeek from "../../components/GetLastWeek/GetLastWeek";
 import Navbar from "../../components/Navbar/Navbar";
 import RetourButton from "../../components/RetourButton/RetourButton";
+import StatusIcons from "../../components/StatusIcons/StatusIcons";
 
 import "./PastWeeks.scss";
 
@@ -56,7 +57,7 @@ function PastWeeks() {
     const matchAnnee = annee ? ficheAnnee === annee : true;
 
     return matchMois && matchAnnee;
-  });
+  }).reverse();
 
   return (
     <>
@@ -68,7 +69,8 @@ function PastWeeks() {
         <Title title="Semaines précédentes" />
         {alternant && (
           <h3>
-            {alternantArray[0]?.alternant.utilisateur.prenom} {alternantArray[0]?.alternant.utilisateur.nom}
+            {alternantArray[0]?.alternant.utilisateur.prenom}{" "}
+            {alternantArray[0]?.alternant.utilisateur.nom}
           </h3>
         )}
 
@@ -89,7 +91,10 @@ function PastWeeks() {
                     {fiche?.date_debut &&
                       new Date(fiche.date_debut).toLocaleDateString("fr-FR")}
                   </p>
-                  <p>Statut : {fiche.status_fiche}</p>
+                  <p className=" past-weeks-list-item-status">
+                    Statut : {fiche.status_fiche}
+                    <StatusIcons status={fiche.status_fiche} />
+                  </p>
                 </div>
               </Link>
             ))
