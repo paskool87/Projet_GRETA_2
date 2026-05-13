@@ -8,6 +8,7 @@ import GetLastWeek from "../../components/GetLastWeek/GetLastWeek";
 import StatusIcons from "../../components/StatusIcons/StatusIcons";
 
 import useLastMondays from "../../hooks/useLastMondays";
+import useAlphabeticSort from "../../hooks/useAlphabeticSort";
 import useFetch from "../../hooks/useFetch";
 import { BASE_URL } from "../../config";
 
@@ -35,7 +36,7 @@ function BoardAdmin() {
 
   console.log("Données récupérées :", data);
 
-  const listeAlternants = data.map((alt) => {
+  const listeAlternants = useAlphabeticSort(data.map((alt) => {
     const fiches = alt.fiche || [];
 
     // ajuster les variables pour correspondre à la semaine dernière(fiche à valider) (surement faire length -2 pour dernière_fiche)
@@ -74,7 +75,7 @@ function BoardAdmin() {
         (f) => f.status !== "VALIDE",
       ).length,
     };
-  });
+  }), "nom");
 
   const mapping = {
     "Total alternants": () => true,
@@ -102,7 +103,7 @@ function BoardAdmin() {
       return idA - idB;
     }),
   ];
-  
+
   const getCount = (titre) => {
     return listeAlternants.filter(mapping[titre]).length;
   };
