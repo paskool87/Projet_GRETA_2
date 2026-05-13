@@ -43,7 +43,8 @@ function BoardAdmin() {
 
     const allStatusFiches = fiches.map((f) => f.status_fiche);
 
-    const pastFichesAlternants = fiches.slice(0, -1).map((f) => ({ //slice (0,-2) pour correspondre à la semaine dernière
+    const pastFichesAlternants = fiches.slice(0, -1).map((f) => ({
+      //slice (0,-2) pour correspondre à la semaine dernière
       id: f.id,
       status: f.status_fiche,
       date: f.date_debut,
@@ -90,9 +91,18 @@ function BoardAdmin() {
 
   const groupes = [
     "Tous",
-    ...new Set(listeAlternants.map((a) => a.formationId + " - " + a.formation)),
-  ];
+    ...[
+      ...new Set(
+        listeAlternants.map((a) => a.formationId + " - " + a.formation),
+      ),
+    ].sort((a, b) => {
+      const idA = parseInt(a.split(" - ")[0], 10);
+      const idB = parseInt(b.split(" - ")[0], 10);
 
+      return idA - idB;
+    }),
+  ];
+  
   const getCount = (titre) => {
     return listeAlternants.filter(mapping[titre]).length;
   };
@@ -150,21 +160,23 @@ function BoardAdmin() {
 
             {lignes.map((titre, index) => (
               <div key={index} className="board-admin-main-global-item">
-                <h3>{titre}</h3>
                 <p>{getCount(titre)}</p>
-                <StatusIcons
-                  status={
-                    titre === "Fiche validée"
-                      ? "VALIDE"
-                      : titre === "En attente de validation"
-                      ? "SOUMISE"
-                      : titre === "Fiches non remplies"
-                      ? "BROUILLON"
-                      : titre === "Critères non remplis"
-                      ? "CRITERES_NON_REMPLIS"
-                      : null
-                  }
-                />
+                <div className="board-admin-main-global-item-box">
+                  <h3>{titre}</h3>
+                  <StatusIcons
+                    status={
+                      titre === "Fiche validée"
+                        ? "VALIDE"
+                        : titre === "En attente de validation"
+                        ? "SOUMISE"
+                        : titre === "Fiches non remplies"
+                        ? "BROUILLON"
+                        : titre === "Critères non remplis"
+                        ? "CRITERES_NON_REMPLIS"
+                        : null
+                    }
+                  />
+                </div>
               </div>
             ))}
           </div>
@@ -176,10 +188,22 @@ function BoardAdmin() {
               <div className="board-admin-main-lists-list-header">
                 <h3>Total alternants</h3>
 
-                <p>{lastMondays[0]}</p>
-                <p>{lastMondays[1]}</p>
-                <p>{lastMondays[2]}</p>
-                <p>{lastMondays[3]}</p>
+                <p>
+                  Semaine du<br></br>
+                  {lastMondays[0]}
+                </p>
+                <p>
+                  Semaine du<br></br>
+                  {lastMondays[1]}
+                </p>
+                <p>
+                  Semaine du<br></br>
+                  {lastMondays[2]}
+                </p>
+                <p>
+                  Semaine du<br></br>
+                  {lastMondays[3]}
+                </p>
                 <p>Fiches précédentes non conformes </p>
               </div>
               <div className="board-admin-main-lists-list-content">
@@ -206,11 +230,13 @@ function BoardAdmin() {
                         </>
                       ))}
                       <span
-                        className={//remettre 0 et 5 (ou 2)
+                        className={
+                          //remettre 0 et 5 (ou 2)
                           `number-badge
                           ${alt.pastNotValidatedCount === 10 ? "success" : ""}
                           ${alt.pastNotValidatedCount > 15 ? "danger" : ""}
-                   `}
+                   `
+                        }
                       >
                         {alt.pastNotValidatedCount}
                       </span>
@@ -224,7 +250,10 @@ function BoardAdmin() {
               <div className="board-admin-main-lists-list-header">
                 <h3>En attente de validation</h3>
 
-                <p>{lastMondays[0]}</p>
+                <p>
+                  Semaine du<br></br>
+                  {lastMondays[0]}
+                </p>
               </div>
               <div className="board-admin-main-lists-list-content">
                 <ul>
@@ -255,13 +284,15 @@ function BoardAdmin() {
                 </ul>
               </div>
             </div>
-          
 
             <div className="board-admin-main-lists-list second-list">
               <div className="board-admin-main-lists-list-header">
                 <h3> Fiches non remplies </h3>
 
-                <p>{lastMondays[0]}</p>
+                <p>
+                  Semaine du<br></br>
+                  {lastMondays[0]}
+                </p>
               </div>
               <div className="board-admin-main-lists-list-content">
                 <ul>
@@ -296,7 +327,10 @@ function BoardAdmin() {
               <div className="board-admin-main-lists-list-header">
                 <h3> Critères non remplis </h3>
 
-                <p>{lastMondays[0]}</p>
+                <p>
+                  Semaine du<br></br>
+                  {lastMondays[0]}
+                </p>
               </div>
               <div className="board-admin-main-lists-list-content">
                 <ul>
@@ -341,6 +375,7 @@ function BoardAdmin() {
               ))}
             </select>
           </div>
+
           <div className="board-admin-main-filter second-filter">
             <label>Groupe :</label>
 
