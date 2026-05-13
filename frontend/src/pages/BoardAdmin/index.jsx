@@ -221,7 +221,7 @@ function BoardAdmin() {
                         <>
                           <div key={i} className="fiche-date">
                             <span key={i} className="fiche-badge">
-                              {f.status}
+                              {/*f.status} */}
                             </span>
 
                             <span>
