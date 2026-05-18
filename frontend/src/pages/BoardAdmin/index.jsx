@@ -36,46 +36,50 @@ function BoardAdmin() {
 
   console.log("Données récupérées :", data);
 
-  const listeAlternants = useAlphabeticSort(data.map((alt) => {
-    const fiches = alt.fiche || [];
+  const listeAlternants = useAlphabeticSort(
+    data.map((alt) => {
+      const fiches = alt.fiche || [];
 
-    // ajuster les variables pour correspondre à la semaine dernière(fiche à valider) (surement faire length -2 pour dernière_fiche)
-    const derniere_fiche = fiches.length > 0 ? fiches[fiches.length - 1] : null;
+      // ajuster les variables pour correspondre à la semaine dernière(fiche à valider) ( faire length -2 pour dernière_fiche)
+      const derniere_fiche =
+        fiches.length > 0 ? fiches[fiches.length - 2] : null;
 
-    const allStatusFiches = fiches.map((f) => f.status_fiche);
+      const allStatusFiches = fiches.map((f) => f.status_fiche);
 
-    const pastFichesAlternants = fiches.slice(0, -1).map((f) => ({
-      //slice (0,-2) pour correspondre à la semaine dernière
-      id: f.id,
-      status: f.status_fiche,
-      date: f.date_debut,
-    }));
-
-    const last4Fiches = [...fiches]
-      .sort((a, b) => new Date(b.date_debut) - new Date(a.date_debut)) // plus récent d'abord
-      .slice(0, 4)
-      .map((f) => ({
+      const pastFichesAlternants = fiches.slice(0, -2).map((f) => ({
+        //slice (0,-2) pour correspondre à la semaine dernière
         id: f.id,
         status: f.status_fiche,
         date: f.date_debut,
       }));
 
-    return {
-      alternantId: alt.alternant.id,
-      nom: alt.alternant.utilisateur.nom,
-      prenom: alt.alternant.utilisateur.prenom,
-      formation: alt.formation?.nom_formation,
-      formationId: alt.formation?.id,
-      status: derniere_fiche?.status_fiche ?? null,
-      pastFichesAlternant: pastFichesAlternants,
-      last4FichesAlternant: last4Fiches,
-      allStatusFichesAlternant: allStatusFiches,
+      const last4Fiches = [...fiches]
+        .sort((a, b) => new Date(b.date_debut) - new Date(a.date_debut)) // plus récent d'abord
+        .slice(1, 5) // prendre les 4 fiches précédentes (en excluant la dernière fiche qui est la semaine en cours)
+        .map((f) => ({
+          id: f.id,
+          status: f.status_fiche,
+          date: f.date_debut,
+        }));
 
-      pastNotValidatedCount: pastFichesAlternants.filter(
-        (f) => f.status !== "VALIDE",
-      ).length,
-    };
-  }), "nom");
+      return {
+        alternantId: alt.alternant.id,
+        nom: alt.alternant.utilisateur.nom,
+        prenom: alt.alternant.utilisateur.prenom,
+        formation: alt.formation?.nom_formation,
+        formationId: alt.formation?.id,
+        status: derniere_fiche?.status_fiche ?? null,
+        pastFichesAlternant: pastFichesAlternants,
+        last4FichesAlternant: last4Fiches,
+        allStatusFichesAlternant: allStatusFiches,
+
+        pastNotValidatedCount: pastFichesAlternants.filter(
+          (f) => f.status !== "VALIDE",
+        ).length,
+      };
+    }),
+    "nom",
+  );
 
   const mapping = {
     "Total alternants": () => true,
@@ -143,6 +147,8 @@ function BoardAdmin() {
     return matchStatut && matchGroupe;
   });
 
+  
+
   return (
     <>
       <Navbar />
@@ -189,6 +195,8 @@ function BoardAdmin() {
               <div className="board-admin-main-lists-list-header">
                 <h3>Total alternants</h3>
 
+                <p>Fiches précédentes non conformes </p>
+
                 <p>
                   Semaine du<br></br>
                   {lastMondays[0]}
@@ -205,18 +213,30 @@ function BoardAdmin() {
                   Semaine du<br></br>
                   {lastMondays[3]}
                 </p>
-                <p>Fiches précédentes non conformes </p>
               </div>
               <div className="board-admin-main-lists-list-content">
                 <ul>
                   {dataFiltreeTotal.map((alt) => (
-                    <li key={alt.alternantId}>
+                    <li key={alt.alternantId}  >
                       <Link
                         to={`/FicheAlternant/${alt.alternantId}`}
                         onClick={saveLocation}
                       >
                         {alt.nom} {alt.prenom}
                       </Link>
+
+                      <span
+                        className={
+                          //remettre 0 et 5 (ou 2)
+                          `number-badge
+                          ${alt.pastNotValidatedCount === 10 ? "success" : ""}
+                          ${alt.pastNotValidatedCount > 15 ? "danger" : ""}
+                   `
+                        }
+                      >
+                        {alt.pastNotValidatedCount}
+                      </span>
+
                       {alt.last4FichesAlternant.map((f, i) => (
                         <>
                           <div key={i} className="fiche-date">
@@ -230,17 +250,6 @@ function BoardAdmin() {
                           </div>
                         </>
                       ))}
-                      <span
-                        className={
-                          //remettre 0 et 5 (ou 2)
-                          `number-badge
-                          ${alt.pastNotValidatedCount === 10 ? "success" : ""}
-                          ${alt.pastNotValidatedCount > 15 ? "danger" : ""}
-                   `
-                        }
-                      >
-                        {alt.pastNotValidatedCount}
-                      </span>
                     </li>
                   ))}
                 </ul>
@@ -270,7 +279,7 @@ function BoardAdmin() {
                       <>
                         <div className="fiche-date">
                           <span className="fiche-badge">
-                            {alt.last4FichesAlternant[0]?.status || "N/A"}
+                            {/*alt.last4FichesAlternant[0]?.status || "N/A"*/}
                           </span>
 
                           <span>
@@ -309,7 +318,7 @@ function BoardAdmin() {
                       <>
                         <div className="fiche-date">
                           <span className="fiche-badge">
-                            {alt.last4FichesAlternant[0]?.status || "N/A"}
+                            {/*alt.last4FichesAlternant[0]?.status || "N/A"*/}
                           </span>
 
                           <span>
@@ -347,7 +356,7 @@ function BoardAdmin() {
                       <>
                         <div className="fiche-date">
                           <span className="fiche-badge">
-                            {alt.last4FichesAlternant[0]?.status || "N/A"}
+                            {/*alt.last4FichesAlternant[0]?.status || "N/A"*/}
                           </span>
 
                           <span>
