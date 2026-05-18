@@ -147,8 +147,6 @@ function BoardAdmin() {
     return matchStatut && matchGroupe;
   });
 
-  
-
   return (
     <>
       <Navbar />
@@ -217,7 +215,7 @@ function BoardAdmin() {
               <div className="board-admin-main-lists-list-content">
                 <ul>
                   {dataFiltreeTotal.map((alt) => (
-                    <li key={alt.alternantId}  >
+                    <li key={alt.alternantId}>
                       <Link
                         to={`/FicheAlternant/${alt.alternantId}`}
                         onClick={saveLocation}
@@ -230,12 +228,13 @@ function BoardAdmin() {
                           //remettre 0 et 5 (ou 2)
                           `number-badge
                           ${alt.pastNotValidatedCount === 10 ? "success" : ""}
-                          ${alt.pastNotValidatedCount > 15 ? "danger" : ""}
-                   `
+                          ${alt.pastNotValidatedCount > 15 ? "danger" : ""}`
                         }
                       >
                         {alt.pastNotValidatedCount}
                       </span>
+
+                    
 
                       {alt.last4FichesAlternant.map((f, i) => (
                         <>
